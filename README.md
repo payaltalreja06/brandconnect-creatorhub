@@ -27,10 +27,74 @@ This repository contains a prototype **brand-influencer marketplace** built with
 - JWT-based auth assumed (to be implemented)
 
 ### ✅ API Documentation (Ready-to-use)
-See: `backend/schema-api-doc.txt`
-- Full schema documentation for every collection
-- REST API contract for all endpoints required by UI
-- Test case recommendations for QA
+All endpoint contracts are documented below so frontend and QA teams can integrate and test immediately.
+
+## 🧩 API Endpoint Reference
+
+> All endpoints requiring authentication expect an `Authorization: Bearer <token>` header.
+
+### Auth
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/auth/register` | POST | Register a user (brand or influencer) |
+| `/api/auth/login` | POST | Login and receive JWT |
+| `/api/auth/me` | GET | Get current user profile |
+
+
+### Users / Search
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/users/me` | GET | Get current user profile |
+| `/api/users/me` | PATCH | Update current user profile |
+| `/api/users/search` | GET | Search for influencers/brands (filter by role/domain/location/page) |
+
+
+### Campaigns
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/campaigns` | GET | List campaigns (filter by role/status/brand/influencer) |
+| `/api/campaigns` | POST | Create a campaign (brand only) |
+| `/api/campaigns/:id` | GET | Get campaign detail |
+| `/api/campaigns/:id` | PATCH | Update campaign (status, deliverables, etc.) |
+| `/api/campaigns/:id/assign` | POST | Assign influencer to campaign |
+| `/api/campaigns/:id/status` | POST | Update campaign status |
+
+
+### Chat (Threads + Messages)
+
+#### Threads
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/chat/threads` | GET | List current user threads |
+| `/api/chat/threads` | POST | Create a new thread |
+| `/api/chat/threads/:id` | GET | Get thread details |
+
+#### Messages
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/chat/threads/:id/messages` | GET | List messages in a thread (pagination) |
+| `/api/chat/threads/:id/messages` | POST | Send a message |
+
+
+### Payments
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/payments` | GET | List payments (filter by user, status, campaign) |
+| `/api/payments/:id` | GET | Get payment detail |
+| `/api/payments/:id/status` | POST | Update payment status |
+
+
+### Notifications
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/notifications` | GET | List user notifications |
+| `/api/notifications/:id/read` | POST | Mark a notification as read |
+| `/api/notifications/mark-all-read` | POST | Mark all notifications as read |
 
 ---
 
@@ -58,17 +122,17 @@ npm run dev
 
 ---
 
-## 📄 Where to Find the Schema & API Contract
-- **Schema + API docs**: `backend/schema-api-doc.txt`
-- Use this file to bootstrap backend endpoints and to align frontend integration expectations.
+## 📄 Where to Find the Schema
+- **MongoDB schema**: `backend/schema.txt`
+- Use this file to understand the database collections and document shapes the frontend expects.
 
 ---
 
 ## 🛠️ Next Steps (Recommended)
-1. Implement backend routes based on the API contract in `schema-api-doc.txt`
+1. Implement backend routes based on the API contract in this README
 2. Add authentication (JWT) and route guards for protected endpoints
 3. Replace frontend mock data (`dummy.ts`) with REST API calls
-4. Add unit/API tests (Postman/Newman) based on the test cases in the doc
+4. Add unit/API tests (Postman/Newman) based on the test cases implied by the endpoint contracts
 
 ---
 

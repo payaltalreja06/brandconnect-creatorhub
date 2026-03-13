@@ -1,0 +1,226 @@
+MongoDB Schema (Collections)
+============================
+
+This file defines the collections and document shapes used by the MERN backend.
+It is intended for developers to understand the database model used by the frontend.
+
+---
+
+## 1) users (brands + influencers)
+
+Purpose: Single source of truth for identity + profile data.
+
+Indexes:
+- email (unique)
+- role
+- handle
+- status
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "email": "string",
+  "passwordHash": "string",
+  "role": "influencer | brand",
+  "name": "string",
+  "avatar": "string",
+  "handle": "string",
+  "bio": "string",
+  "location": "string",
+  "status": "active | suspended | deleted",
+  "settings": {
+    "language": "string",
+    "notificationsEnabled": "boolean"
+  },
+  "profile": {
+    "domains": ["string"],
+    "platforms": ["string"],
+    "followers": "number",
+    "engagementRate": "number",
+    "rateMin": "number",
+    "rateMax": "number",
+    "verified": "boolean",
+    "healthScore": "number",
+    "socials": { "youtube": "string", "instagram": "string" }
+  },
+  "brand": {
+    "industry": "string",
+    "domain": "string",
+    "budget": { "min": "number", "max": "number" },
+    "website": "string",
+    "contactEmail": "string",
+    "campaignsCount": "number"
+  },
+  "createdAt": "date",
+  "updatedAt": "date"
+}
+```
+
+---
+
+## 2) campaigns
+
+Purpose: Tracks brand-influencer collaboration offers and lifecycle.
+
+Indexes:
+- brandId
+- influencerId
+- status
+- createdAt
+- compound: brandId + status
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "title": "string",
+  "description": "string",
+  "deliverables": ["string"],
+  "brandId": "ObjectId -> users",
+  "influencerId": "ObjectId -> users",
+  "budget": { "currency": "string", "min": "number", "max": "number" },
+  "deadline": "date",
+  "status": "pending | accepted | in_progress | completed | cancelled",
+  "metrics": {
+    "engagement": "number",
+    "roi": "number",
+    "impressions": "number",
+    "clicks": "number"
+  },
+  "tags": ["string"],
+  "externalId": "string",
+  "createdAt": "date",
+  "updatedAt": "date"
+}
+```
+
+---
+
+## 3) chatThreads
+
+Purpose: Groups conversation participants and thread metadata.
+
+Indexes:
+- participants
+- updatedAt
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "name": "string",
+  "avatar": "string",
+  "participants": ["ObjectId -> users"],
+  "unreadCounts": { "<userId>": "number" },
+  "lastMessage": "string",
+  "updatedAt": "date",
+  "createdAt": "date"
+}
+```
+
+---
+
+## 4) messages
+
+Purpose: Stores chat messages.
+
+Indexes:
+- threadId
+- senderId
+- createdAt (desc)
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "threadId": "ObjectId -> chatThreads",
+  "senderId": "ObjectId -> users",
+  "type": "text | image | file | system",
+  "text": "string",
+  "attachments": [
+    {
+      "url": "string",
+      "mimeType": "string",
+      "fileName": "string",
+      "sizeBytes": "number"
+    }
+  ],
+  "status": "sent | delivered | read",
+  "metadata": { "any": "any" },
+  "createdAt": "date",
+  "updatedAt": "date"
+}
+```
+
+---
+
+## 5) payments
+
+Purpose: Tracks payout/invoice status.
+
+Indexes:
+- campaignId
+- status
+- createdAt
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "campaignId": "ObjectId -> campaigns",
+  "brandId": "ObjectId -> users",
+  "influencerId": "ObjectId -> users",
+  "amount": "number",
+  "currency": "string",
+  "status": "pending | processing | completed | failed",
+  "processedAt": "date",
+  "createdAt": "date",
+  "updatedAt": "date",
+  "meta": { "gatewayId": "string", "notes": "string" }
+}
+```
+
+---
+
+## 6) notifications
+
+Purpose: In-app alerts for users.
+
+Indexes:
+- recipientId
+- read
+- createdAt
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "recipientId": "ObjectId -> users",
+  "type": "string",
+  "title": "string",
+  "body": "string",
+  "data": { "any": "any" },
+  "read": "boolean",
+  "createdAt": "date",
+  "updatedAt": "date"
+}
+```
+
+---
+
+## 7) analyticsSnapshots (optional)
+
+Purpose: Store periodic analytics snapshots for dashboards.
+
+Example document:
+```json
+{
+  "_id": "ObjectId",
+  "ownerId": "ObjectId -> users",
+  "type": "youtube | instagram | campaign",
+  "payload": { "any": "any" },
+  "capturedAt": "date",
+  "createdAt": "date"
+}
+```
