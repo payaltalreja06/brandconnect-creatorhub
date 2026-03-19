@@ -55,14 +55,12 @@ export default function InfluencerProfilePage() {
                   ))}
                 </div>
                 <div className="flex gap-3">
-                  <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+                  <Button className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 hover:from-pink-600 hover:to-rose-600">
                     <Send className="w-4 h-4" /> Send Collaboration Request
                   </Button>
-                  <Link to="/chat">
-                    <Button variant="outline" className="gap-2">
-                      <MessageCircle className="w-4 h-4" /> Message
-                    </Button>
-                  </Link>
+                  <Button variant="outline" className="gap-2">
+                    <MessageCircle className="w-4 h-4" /> Message
+                  </Button>
                 </div>
               </div>
             </div>

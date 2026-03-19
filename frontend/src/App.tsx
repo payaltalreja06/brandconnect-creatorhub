@@ -7,7 +7,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
 import NotFound from "@/pages/NotFound";
+import InfluencersPage from "@/pages/InfluencersPage";
 
 import InfluencerLayout from "@/components/InfluencerLayout";
 import InfluencerDashboard from "@/pages/influencer/InfluencerDashboard";
@@ -28,6 +30,7 @@ import BrandAnalytics from "@/pages/brand/BrandAnalytics";
 import BrandPayments from "@/pages/brand/BrandPayments";
 import BrandProfile from "@/pages/brand/BrandProfile";
 import InfluencerProfilePage from "@/pages/InfluencerProfilePage";
+import BrandProfilePage from "@/pages/BrandProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -41,13 +44,16 @@ const App = () => (
           <Routes>
             {/* Public */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/influencers" element={<InfluencersPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
 
             {/* Influencer routes */}
             <Route path="/influencer/dashboard" element={<InfluencerLayout><InfluencerDashboard /></InfluencerLayout>} />
             <Route path="/influencer/analytics" element={<InfluencerLayout><InfluencerAnalytics /></InfluencerLayout>} />
             <Route path="/influencer/campaigns" element={<InfluencerLayout><InfluencerCampaigns /></InfluencerLayout>} />
             <Route path="/influencer/brands" element={<InfluencerLayout><InfluencerBrands /></InfluencerLayout>} />
+            <Route path="/influencer/brand/:id" element={<InfluencerLayout><BrandProfilePage /></InfluencerLayout>} />
             <Route path="/influencer/messages" element={<InfluencerLayout><InfluencerMessages /></InfluencerLayout>} />
             <Route path="/influencer/revenue" element={<InfluencerLayout><InfluencerRevenue /></InfluencerLayout>} />
             <Route path="/influencer/schedule" element={<InfluencerLayout><InfluencerSchedule /></InfluencerLayout>} />

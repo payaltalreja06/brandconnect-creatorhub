@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap, User, Building2, ArrowRight, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -95,6 +95,9 @@ export default function LoginPage() {
                 </CardContent>
               </Card>
             </motion.div>
+            <div className="mt-8 text-center text-sm text-muted-foreground">
+              Don't have an account? <Link to="/signup" className="text-primary hover:underline font-medium">Sign up</Link>
+            </div>
           </div>
         ) : (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>

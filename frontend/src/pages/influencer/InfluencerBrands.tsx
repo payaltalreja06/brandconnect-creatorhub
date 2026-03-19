@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,9 +45,16 @@ export default function InfluencerBrands() {
                 <div className="flex items-center gap-2"><Megaphone className="w-3.5 h-3.5" />{b.campaigns} campaigns</div>
                 <div className="flex items-center gap-2">💰 Budget: {b.budget}</div>
               </div>
-              <Button className="w-full gap-2" size="sm" onClick={() => toast.success(`Request sent to ${b.name}!`)}>
-                <Send className="w-3.5 h-3.5" /> Send Request
-              </Button>
+              <div className="flex gap-2">
+                <Link to={`/influencer/brand/${b.id}`} className="flex-1">
+                  <Button variant="outline" className="w-full" size="sm">
+                    View Profile
+                  </Button>
+                </Link>
+                <Button className="flex-1 gap-2" size="sm" onClick={() => toast.success(`Request sent to ${b.name}!`)}>
+                  <Send className="w-3.5 h-3.5" /> Pitch
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

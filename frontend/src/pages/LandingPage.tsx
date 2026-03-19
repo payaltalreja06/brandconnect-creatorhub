@@ -3,6 +3,12 @@ import { motion } from "framer-motion";
 import { Search, BarChart3, MessageCircle, ArrowRight, Users, TrendingUp, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import PublicNavbar from "@/components/PublicNavbar";
+import HowItWorks from "@/components/HowItWorks";
+import CampaignsSection from "@/components/CampaignsSection";
+import FAQAccordion from "@/components/FAQAccordion";
+import ContactUs from "@/components/ContactUs";
+import MarketplaceFooter from "@/components/MarketplaceFooter";
 
 const features = [
   { icon: Search, title: "Smart Discovery", desc: "Find influencers by niche, engagement rate, and audience demographics." },
@@ -26,27 +32,7 @@ const fadeUp = {
 export default function LandingPage() {
   return (
     <div className="overflow-hidden">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 glass">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              CollabHub
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">Sign In</Button>
-            </Link>
-            <Link to="/login">
-              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicNavbar />
 
       {/* Hero */}
       <section className="relative py-24 md:py-32 px-4">
@@ -144,16 +130,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-border py-8 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>© 2024 CollabHub. All rights reserved.</p>
-          <div className="flex gap-6">
-            <span className="hover:text-foreground cursor-pointer">Privacy</span>
-            <span className="hover:text-foreground cursor-pointer">Terms</span>
-            <span className="hover:text-foreground cursor-pointer">Support</span>
-          </div>
-        </div>
-      </footer>
+      <HowItWorks />
+      <CampaignsSection />
+      <FAQAccordion />
+      <ContactUs />
+      <MarketplaceFooter />
     </div>
   );
 }
