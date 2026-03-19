@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { campaigns } from "@/data/dummy";
 import { CheckCircle, Clock, Play, AlertCircle } from "lucide-react";
 
@@ -72,7 +73,42 @@ export default function InfluencerCampaigns() {
                             <span>Deliverables: <span className="font-medium text-foreground">{c.deliverables.length}</span></span>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">View Details</Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">View Details</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{c.title}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-2">
+                              <div>
+                                <h4 className="font-semibold text-sm mb-1">Brand</h4>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2"><span className="text-xl">{c.brandLogo}</span> {c.brandName}</p>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm mb-1">Description</h4>
+                                <p className="text-sm text-muted-foreground">{c.description}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-1">Budget</h4>
+                                  <p className="text-sm text-foreground font-medium">{c.budget}</p>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-1">Deadline</h4>
+                                  <p className="text-sm text-foreground font-medium">{c.deadline}</p>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm mb-1">Deliverables</h4>
+                                <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                  {c.deliverables.map((d, i) => <li key={i}>{d}</li>)}
+                                </ul>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </CardContent>
                   </Card>

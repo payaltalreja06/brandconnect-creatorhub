@@ -118,7 +118,48 @@ export default function BrandCampaigns() {
                             {c.roi && <span>ROI: <span className="font-medium text-foreground">{c.roi}x</span></span>}
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">Manage</Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">Manage</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Manage: {c.title}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-2">
+                              <div>
+                                <h4 className="font-semibold text-sm mb-1">Status</h4>
+                                <Badge variant={config.variant} className="gap-1 mt-1">
+                                  <config.icon className="w-3 h-3" /> {config.label}
+                                </Badge>
+                              </div>
+                              {c.influencerName && (
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-1">Influencer</h4>
+                                  <p className="text-sm text-muted-foreground">{c.influencerName}</p>
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="font-semibold text-sm mb-1">Description</h4>
+                                <p className="text-sm text-muted-foreground">{c.description}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-1">Budget</h4>
+                                  <p className="text-sm text-foreground font-medium">{c.budget}</p>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-1">Deadline</h4>
+                                  <p className="text-sm text-foreground font-medium">{c.deadline}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button className="w-full flex-1" variant="outline">Edit Campaign</Button>
+                                {c.status !== "completed" && <Button className="w-full flex-1">Mark Completed</Button>}
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </CardContent>
                   </Card>

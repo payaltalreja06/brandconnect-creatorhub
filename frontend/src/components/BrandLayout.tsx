@@ -34,7 +34,7 @@ function BrandSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4 flex items-center gap-2">
+        <Link to="/" className="p-4 flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
             <Zap className="w-4 h-4 text-primary-foreground" />
           </div>
@@ -43,7 +43,7 @@ function BrandSidebar() {
               CollabHub
             </span>
           )}
-        </div>
+        </Link>
 
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>

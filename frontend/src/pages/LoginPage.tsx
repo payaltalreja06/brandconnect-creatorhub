@@ -5,7 +5,10 @@ import { Zap, User, Building2, ArrowRight, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, API_URL } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 
 export default function LoginPage() {
   const [step, setStep] = useState<"role" | "credentials">("role");
@@ -15,17 +18,43 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleRoleSelect = (role: "influencer" | "brand") => {
     setSelectedRole(role);
     setStep("credentials");
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) return;
-    const name = selectedRole === "influencer" ? "Priya Sharma" : "GlowSkin Co.";
-    login(selectedRole, name);
-    navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    
+    setIsLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/login`, { email, password });
+      login(res.data.token, res.data.user);
+      toast.success("Welcome back!");
+      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      // Decode locally or send straight to backend to verify
+      const res = await axios.post(`${API_URL}/google`, { 
+        credential: credentialResponse.credential,
+        role: selectedRole
+      });
+      login(res.data.token, res.data.user);
+      toast.success("Successfully logged in with Google!");
+      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Google Login failed");
+    }
   };
 
   return (
@@ -141,9 +170,26 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full gap-2">
-                    Sign In <ArrowRight className="w-4 h-4" />
+                  <Button type="submit" disabled={isLoading} className="w-full gap-2">
+                    {isLoading ? "Signing In..." : "Sign In"} <ArrowRight className="w-4 h-4" />
                   </Button>
+
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center flex-col items-center">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => toast.error("Google login failed")}
+                      width="350px"
+                    />
+                  </div>
 
                   <Button
                     type="button"

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
+import { toast } from "sonner";
 
 const footerLinks = {
   Platform: [
@@ -67,6 +68,9 @@ export default function MarketplaceFooter() {
                           if (isHashLink && window.location.pathname === "/") {
                             e.preventDefault();
                             document.querySelector(link.path.replace("/", ""))?.scrollIntoView({ behavior: "smooth" });
+                          } else if (link.path === "/") {
+                            e.preventDefault();
+                            toast.info("Coming soon!");
                           }
                         }}
                       >

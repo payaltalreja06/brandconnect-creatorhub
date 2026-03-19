@@ -1,13 +1,56 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { postingData } from "@/data/dummy";
+import { postingData, campaigns } from "@/data/dummy";
 
 export default function InfluencerSchedule() {
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const myCampaigns = campaigns.filter(c => c.influencerId);
+
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Posting Schedule</h1>
         <p className="text-muted-foreground text-sm">Analyze your posting consistency and find the best times</p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="md:col-span-1 flex flex-col items-center border-none shadow-none bg-transparent">
+           <CardHeader className="w-full px-0 pb-3"><CardTitle className="text-lg">Campaign Calendar</CardTitle></CardHeader>
+           <CardContent className="w-full px-0 flex justify-center md:justify-start">
+             <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                className="rounded-xl border bg-card text-card-foreground shadow-sm w-full max-w-[300px]"
+             />
+           </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+           <CardHeader className="pb-3"><CardTitle className="text-lg">Upcoming Deadlines</CardTitle></CardHeader>
+           <CardContent className="space-y-3">
+             {myCampaigns.length > 0 ? myCampaigns.map(c => (
+               <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-xl gap-3">
+                 <div className="flex items-center gap-3">
+                    <span className="text-3xl shrink-0">{c.brandLogo}</span>
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{c.title}</p>
+                      <p className="text-sm text-muted-foreground truncate">{c.brandName}</p>
+                    </div>
+                 </div>
+                 <div className="sm:text-right shrink-0">
+                    <p className="font-medium text-sm">{new Date(c.deadline).toLocaleDateString()}</p>
+                    <Badge variant="outline" className="mt-1 capitalize">{c.status.replace("_", " ")}</Badge>
+                 </div>
+               </div>
+             )) : (
+               <p className="text-sm text-muted-foreground">No upcoming campaigns.</p>
+             )}
+           </CardContent>
+        </Card>
       </div>
 
       <div className="grid md:grid-cols-3 gap-3">

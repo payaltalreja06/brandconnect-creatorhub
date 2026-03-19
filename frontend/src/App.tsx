@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
@@ -39,9 +40,10 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+      <GoogleOAuthProvider clientId="1234567890-mock.apps.googleusercontent.com">
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
             {/* Public */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/influencers" element={<InfluencersPage />} />
@@ -70,9 +72,10 @@ const App = () => (
             <Route path="/brand/profile" element={<BrandLayout><BrandProfile /></BrandLayout>} />
 
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </GoogleOAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

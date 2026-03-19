@@ -6,6 +6,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { influencers, ytAnalytics, instaAnalytics } from "@/data/dummy";
 
 function formatNumber(n: number): string {
@@ -55,12 +59,34 @@ export default function InfluencerProfilePage() {
                   ))}
                 </div>
                 <div className="flex gap-3">
-                  <Button className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 hover:from-pink-600 hover:to-rose-600">
-                    <Send className="w-4 h-4" /> Send Collaboration Request
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <MessageCircle className="w-4 h-4" /> Message
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 hover:from-pink-600 hover:to-rose-600">
+                        <Send className="w-4 h-4" /> Send Collaboration Request
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Send Collaboration Request</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Campaign Name</label>
+                          <Input placeholder="e.g. Summer Skincare Promo" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Message/Brief</label>
+                          <Textarea placeholder="Describe your campaign goals and deliverables..." rows={4} />
+                        </div>
+                        <Button className="w-full" onClick={() => toast.success("Request sent successfully!")}>Send Request</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Link to="/brand/messages">
+                    <Button variant="outline" className="gap-2">
+                      <MessageCircle className="w-4 h-4" /> Message
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -95,6 +121,21 @@ export default function InfluencerProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* FAQ Section */}
+        {inf.faqs && inf.faqs.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader><CardTitle className="text-base flex items-center gap-2">Creator FAQ</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {inf.faqs.map((faq, i) => (
+                <div key={i}>
+                  <h4 className="font-medium text-sm text-gray-900 mb-1">{faq.question}</h4>
+                  <p className="text-sm text-gray-500">{faq.answer}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Content Preview */}
         <div className="grid md:grid-cols-2 gap-6">

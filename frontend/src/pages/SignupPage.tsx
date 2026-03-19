@@ -5,7 +5,10 @@ import { Zap, User, Building2, ArrowRight, Mail, Lock, Camera, Link as LinkIcon 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, API_URL } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 
 export default function SignupPage() {
   const [step, setStep] = useState<"role" | "details">("role");
@@ -25,20 +28,55 @@ export default function SignupPage() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRoleSelect = (role: "influencer" | "brand") => {
     setSelectedRole(role);
     setStep("details");
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) return;
     
-    // Using login from context to simulate a sign up and immediate login for now
-    const displayName = selectedRole === "influencer" ? (name || "New Influencer") : (brandName || "New Brand");
-    login(selectedRole, displayName);
-    navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    setIsLoading(true);
+    try {
+      const payload: any = {
+        email,
+        password,
+        role: selectedRole,
+        name: selectedRole === "influencer" ? name : brandName,
+      };
+
+      if (selectedRole === "influencer") {
+        payload.profile = { socials: { instagram, tiktok, youtube } };
+      } else {
+        payload.brand = { website };
+      }
+
+      const res = await axios.post(`${API_URL}/signup`, payload);
+      login(res.data.token, res.data.user);
+      toast.success("Account created successfully!");
+      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Signup failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      const res = await axios.post(`${API_URL}/google`, { 
+        credential: credentialResponse.credential,
+        role: selectedRole
+      });
+      login(res.data.token, res.data.user);
+      toast.success("Successfully logged in with Google!");
+      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Google Signup failed");
+    }
   };
 
   return (
@@ -251,9 +289,26 @@ export default function SignupPage() {
                     >
                       Back
                     </Button>
-                    <Button type="submit" className="flex-1 gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0">
-                      Complete Sign Up <ArrowRight className="w-4 h-4" />
+                    <Button type="submit" disabled={isLoading} className="flex-1 gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0">
+                      {isLoading ? "Creating..." : "Complete Sign Up"} <ArrowRight className="w-4 h-4" />
                     </Button>
+                  </div>
+
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center flex-col items-center pb-2">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => toast.error("Google login failed")}
+                      width="350px"
+                    />
                   </div>
                 </form>
               </CardContent>

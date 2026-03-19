@@ -23,6 +23,7 @@ export interface Influencer {
   ytSubscribers?: number;
   instaFollowers?: number;
   healthScore?: number;
+  faqs?: FAQ[];
 }
 
 export interface FAQ {
@@ -41,6 +42,7 @@ export interface Brand {
   budget: string;
   website: string;
   contactEmail: string;
+  faqs?: FAQ[];
 }
 
 export interface Campaign {
@@ -102,6 +104,10 @@ export const influencers: Influencer[] = [
     domain: ["Skincare", "Beauty"], followers: 2400000, engagement: 4.8, platforms: ["YouTube", "Instagram"],
     location: "Mumbai, India", bio: "Dermatologist-turned-creator sharing honest skincare reviews and routines. Featured in Vogue India.", rate: "₹80,000 - ₹1,50,000", price: 247, verified: true, ytSubscribers: 1800000, instaFollowers: 600000, healthScore: 87,
     rating: 5.0, reviewCount: 34, contentType: ["UGC", "Reels"], gender: "Female", age: "25-34", language: "English", badges: ["Top Creator"],
+    faqs: [
+      { question: "Do you offer UGC videos?", answer: "Yes, I create high-quality UGC starting from ₹20,000 per video." },
+      { question: "What is your turnaround time?", answer: "Usually 5-7 business days after receiving the product." }
+    ]
   },
   {
     id: "2", name: "Arjun Mehta", handle: "@arjunfitlife", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun",
@@ -220,7 +226,10 @@ export const faqData: FAQ[] = [
 ];
 
 export const brands: Brand[] = [
-  { id: "b1", name: "GlowSkin Co.", logo: "🧴", domain: "Skincare", description: "Premium organic skincare brand", campaigns: 12, industry: "Beauty & Skincare", budget: "₹5,00,000 - ₹15,00,000", website: "glowskin.co", contactEmail: "collab@glowskin.co" },
+  { id: "b1", name: "GlowSkin Co.", logo: "🧴", domain: "Skincare", description: "Premium organic skincare brand", campaigns: 12, industry: "Beauty & Skincare", budget: "₹5,00,000 - ₹15,00,000", website: "glowskin.co", contactEmail: "collab@glowskin.co", faqs: [
+    { question: "What is your typical turnaround time?", answer: "We usually review creator pitches within 48 hours and can finalize contracts in under a week." },
+    { question: "Do you provide free products?", answer: "Yes, all selected creators receive a PR package containing the products required for the campaign, alongside monetary compensation." }
+  ] },
   { id: "b2", name: "FitGear Pro", logo: "💪", domain: "Fitness", description: "Performance fitness equipment", campaigns: 8, industry: "Fitness & Sports", budget: "₹3,00,000 - ₹10,00,000", website: "fitgearpro.in", contactEmail: "brand@fitgearpro.in" },
   { id: "b3", name: "StyleVerse", logo: "👗", domain: "Fashion", description: "Sustainable fashion marketplace", campaigns: 15, industry: "Fashion & Apparel", budget: "₹8,00,000 - ₹20,00,000", website: "styleverse.com", contactEmail: "partner@styleverse.com" },
   { id: "b4", name: "TechNova", logo: "🔧", domain: "Tech", description: "Consumer electronics brand", campaigns: 6, industry: "Technology", budget: "₹10,00,000 - ₹25,00,000", website: "technova.in", contactEmail: "marketing@technova.in" },

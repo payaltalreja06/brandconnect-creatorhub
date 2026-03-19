@@ -48,9 +48,11 @@ export default function BrandProfilePage() {
                <Badge className="mb-6">{brand.industry}</Badge>
                
                <div className="flex gap-2 justify-center">
-                 <Button className="w-full gap-2 bg-gradient-to-r from-pink-500 to-rose-500 border-0 text-white">
-                   <Send className="w-4 h-4" /> Message
-                 </Button>
+                 <Link to="/influencer/messages" className="w-full">
+                   <Button className="w-full gap-2 bg-gradient-to-r from-pink-500 to-rose-500 border-0 text-white">
+                     <Send className="w-4 h-4" /> Message
+                   </Button>
+                 </Link>
                </div>
              </CardContent>
           </Card>
@@ -95,21 +97,21 @@ export default function BrandProfilePage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-xl mb-4">Brand FAQ</h3>
-              <div className="space-y-4 border-t border-gray-100 pt-4">
-                 <div>
-                   <h4 className="font-medium text-sm text-gray-900 mb-1">What is your typical turnaround time?</h4>
-                   <p className="text-sm text-gray-500">We usually review creator pitches within 48 hours and can finalize contracts in under a week.</p>
-                 </div>
-                 <div>
-                   <h4 className="font-medium text-sm text-gray-900 mb-1">Do you provide free products?</h4>
-                   <p className="text-sm text-gray-500">Yes, all selected creators receive a PR package containing the products required for the campaign, alongside monetary compensation.</p>
-                 </div>
-              </div>
-            </CardContent>
-          </Card>
+          {brand.faqs && brand.faqs.length > 0 && (
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-xl mb-4">Brand FAQ</h3>
+                <div className="space-y-4 border-t border-gray-100 pt-4">
+                  {brand.faqs.map((faq, i) => (
+                    <div key={i}>
+                      <h4 className="font-medium text-sm text-gray-900 mb-1">{faq.question}</h4>
+                      <p className="text-sm text-gray-500">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
