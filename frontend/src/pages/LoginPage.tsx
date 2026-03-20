@@ -44,16 +44,28 @@ export default function LoginPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      // Decode locally or send straight to backend to verify
-      const res = await axios.post(`${API_URL}/google`, { 
-        credential: credentialResponse.credential,
-        role: selectedRole
+      const res = await axios.post(`${API_URL}/login`, { 
+        credential: credentialResponse.credential
       });
       login(res.data.token, res.data.user);
       toast.success("Successfully logged in with Google!");
       navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Google Login failed");
+      const errorMessage = error.response?.data?.message;
+      
+      if (error.response?.data?.incompleteSignup) {
+        toast.error("Please complete your signup process first.");
+        navigate('/signup');
+        return;
+      }
+      
+      if (error.response?.data?.incompleteProfile) {
+        toast.error("Please complete your signup first. Your profile is missing required information.");
+        navigate('/signup');
+        return;
+      }
+      
+      toast.error(errorMessage || "Google Login failed");
     }
   };
 
@@ -183,7 +195,7 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center flex-col items-center">
+                  <div className="flex justify-center flex-col items-center pb-2">
                     <GoogleLogin
                       onSuccess={handleGoogleSuccess}
                       onError={() => toast.error("Google login failed")}

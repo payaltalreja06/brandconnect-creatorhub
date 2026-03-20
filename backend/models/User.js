@@ -39,6 +39,7 @@ const UserSchema = new mongoose.Schema({
   handle: { type: String, default: "" },
   bio: { type: String, default: "" },
   location: { type: String, default: "" },
+  signupCompleted: { type: Boolean, default: false }, // Explicit flag for completed signup
   status: { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
   settings: {
     language: { type: String, default: "en" },

@@ -39,7 +39,8 @@ router.post('/signup', async (req, res) => {
       passwordHash,
       role,
       name,
-      ...otherDetails
+      ...otherDetails,
+      signupCompleted: true // Mark as completed signup
     });
 
     await newUser.save();
@@ -53,13 +54,68 @@ router.post('/signup', async (req, res) => {
 });
 
 // @route   POST /api/auth/login
-// @desc    Login user via email & password
+// @desc    Login user via email & password or Google OAuth
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, credential } = req.body;
+
+    // Handle Google OAuth login
+    if (credential) {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+
+      if (!payload || !payload.email) {
+        return res.status(400).json({ message: 'Invalid Google token' });
+      }
+
+      const googleEmail = payload.email;
+      const user = await User.findOne({ email: googleEmail });
+
+      if (!user) {
+        return res.status(400).json({ message: 'Account not found. Please sign up first.' });
+      }
+
+      // Check if signup is completed
+      if (!user.signupCompleted) {
+        return res.status(400).json({
+          message: 'Please complete your signup process first.',
+          incompleteSignup: true
+        });
+      }
+
+      // Check profile completeness for additional security
+      if (user.role === 'influencer') {
+        const hasSocials = user.profile?.socials?.instagram || user.profile?.socials?.tiktok || user.profile?.socials?.youtube;
+        if (!hasSocials) {
+          return res.status(400).json({
+            message: 'Please complete your profile first. Visit the signup page to add your social media handles.',
+            incompleteProfile: true
+          });
+        }
+      } else if (user.role === 'brand') {
+        if (!user.brand?.website) {
+          return res.status(400).json({
+            message: 'Please complete your profile first. Visit the signup page to add your website.',
+            incompleteProfile: true
+          });
+        }
+      }
+
+      // User has completed signup and has complete profile, allow login
+      const token = generateToken(user);
+      return res.json({ token, user });
+    }
+
+    // Handle regular email/password login
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
     const user = await User.findOne({ email });
-    
+
     if (!user || !user.passwordHash) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -78,10 +134,10 @@ router.post('/login', async (req, res) => {
 });
 
 // @route   POST /api/auth/google
-// @desc    Login or register via Google
+// @desc    Register new user via Google OAuth (signup only)
 router.post('/google', async (req, res) => {
   try {
-    const { credential, role } = req.body; // Role needed if it's their first time
+    const { credential, role, profile, brand } = req.body;
 
     if (!credential) {
       return res.status(400).json({ message: 'Missing Google credential token' });
@@ -99,24 +155,41 @@ router.post('/google', async (req, res) => {
 
     const { email, name, picture } = payload;
 
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      if (!role) {
-        return res.status(400).json({ message: 'Role is required for new users', needsRole: true });
-      }
-
-      user = new User({
-        email,
-        name: name || '',
-        role,
-        avatar: picture || '',
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'Account already exists. Please use the login page instead.',
+        accountExists: true
       });
-      await user.save();
     }
 
+    // New user - require signup data
+    if (!role) {
+      return res.status(400).json({ message: 'Role is required for new users', needsRole: true });
+    }
+
+    const userData = {
+      email,
+      name: name || '',
+      role,
+      avatar: picture || '',
+      signupCompleted: true // Mark as completed signup
+    };
+
+    // Add additional profile data if provided
+    if (profile) {
+      userData.profile = profile;
+    }
+    if (brand) {
+      userData.brand = brand;
+    }
+
+    const user = new User(userData);
+    await user.save();
+
     const token = generateToken(user);
-    res.json({ token, user });
+    res.status(201).json({ token, user });
   } catch (error) {
     console.error('Google Auth error:', error);
     res.status(500).json({ message: 'Server error' });

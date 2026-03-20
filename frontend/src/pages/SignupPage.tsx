@@ -26,9 +26,50 @@ export default function SignupPage() {
   const [brandName, setBrandName] = useState("");
   const [website, setWebsite] = useState("");
 
+  // Google OAuth state
+  const [googleCredential, setGoogleCredential] = useState<string | null>(null);
+  const [isGoogleSignup, setIsGoogleSignup] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if form is valid for submission
+  const isFormValid = () => {
+    if (!selectedRole) return false;
+    
+    if (isGoogleSignup) {
+      // For Google signup, password not required but profile fields are required
+      if (!email) return false;
+      if (selectedRole === "influencer" && !name) return false;
+      if (selectedRole === "brand" && !brandName) return false;
+      
+      // Check required profile fields for Google signup too
+      if (selectedRole === "influencer") {
+        // At least one social media handle required for influencers
+        if (!instagram && !tiktok && !youtube) return false;
+      } else if (selectedRole === "brand") {
+        // Website required for brands
+        if (!website) return false;
+      }
+    } else {
+      // For regular signup, password required
+      if (!email || !password) return false;
+      if (selectedRole === "influencer" && !name) return false;
+      if (selectedRole === "brand" && !brandName) return false;
+      
+      // Check required profile fields for regular signup
+      if (selectedRole === "influencer") {
+        // At least one social media handle required for regular signup
+        if (!instagram && !tiktok && !youtube) return false;
+      } else if (selectedRole === "brand") {
+        // Website required for regular signup
+        if (!website) return false;
+      }
+    }
+    
+    return true;
+  };
 
   const handleRoleSelect = (role: "influencer" | "brand") => {
     setSelectedRole(role);
@@ -41,25 +82,73 @@ export default function SignupPage() {
     
     setIsLoading(true);
     try {
-      const payload: any = {
-        email,
-        password,
-        role: selectedRole,
-        name: selectedRole === "influencer" ? name : brandName,
-      };
+      let res;
+      
+      if (isGoogleSignup && googleCredential) {
+        // Google signup with additional profile data
+        const payload: any = {
+          credential: googleCredential,
+          role: selectedRole,
+        };
 
-      if (selectedRole === "influencer") {
-        payload.profile = { socials: { instagram, tiktok, youtube } };
+        if (selectedRole === "influencer") {
+          payload.profile = { socials: { instagram, tiktok, youtube } };
+        } else {
+          payload.brand = { website };
+        }
+
+        res = await axios.post(`${API_URL}/google`, payload);
       } else {
-        payload.brand = { website };
-      }
+        // Regular email/password signup
+        const payload: any = {
+          email,
+          password,
+          role: selectedRole,
+          name: selectedRole === "influencer" ? name : brandName,
+        };
 
-      const res = await axios.post(`${API_URL}/signup`, payload);
+        if (selectedRole === "influencer") {
+          payload.profile = { socials: { instagram, tiktok, youtube } };
+        } else {
+          payload.brand = { website };
+        }
+
+        res = await axios.post(`${API_URL}/signup`, payload);
+      }
+      
       login(res.data.token, res.data.user);
       toast.success("Account created successfully!");
       navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Signup failed");
+      const errorMessage = error.response?.data?.message;
+      
+      if (errorMessage?.includes('Account already exists')) {
+        toast.error("An account with this email already exists. Please use the login page instead.");
+        // Reset Google state and redirect to login
+        setGoogleCredential(null);
+        setIsGoogleSignup(false);
+        setEmail('');
+        setPassword('');
+        return;
+      }
+      
+      if (error.response?.data?.incompleteSignup) {
+        toast.error("Your account exists but signup is incomplete. Please complete the signup process.");
+        // Reset Google state
+        setGoogleCredential(null);
+        setIsGoogleSignup(false);
+        return;
+      }
+      
+      if (error.response?.data?.incompleteProfile) {
+        toast.error("Your account exists but profile is incomplete. Please complete signup first.");
+        // Reset Google state
+        setGoogleCredential(null);
+        setIsGoogleSignup(false);
+        return;
+      }
+      
+      toast.error(errorMessage || "Signup failed");
     } finally {
       setIsLoading(false);
     }
@@ -67,15 +156,24 @@ export default function SignupPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const res = await axios.post(`${API_URL}/google`, { 
-        credential: credentialResponse.credential,
-        role: selectedRole
-      });
-      login(res.data.token, res.data.user);
-      toast.success("Successfully logged in with Google!");
-      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+      // Decode the Google JWT to get user info
+      const decoded = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
+      
+      // Pre-fill form fields
+      setEmail(decoded.email || '');
+      if (selectedRole === "influencer") {
+        setName(decoded.name || '');
+      } else {
+        setBrandName(decoded.name || '');
+      }
+      
+      // Store credential for later use
+      setGoogleCredential(credentialResponse.credential);
+      setIsGoogleSignup(true);
+      
+      toast.success("Google account connected! Please complete your profile.");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Google Signup failed");
+      toast.error("Failed to process Google account");
     }
   };
 
@@ -190,24 +288,30 @@ export default function SignupPage() {
                            className="pl-10"
                            value={email}
                            onChange={(e) => setEmail(e.target.value)}
+                           disabled={isGoogleSignup} // Disable if Google was used
                          />
+                         {isGoogleSignup && (
+                           <p className="text-xs text-green-600 mt-1">✓ Verified by Google</p>
+                         )}
                        </div>
                     </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                       <label className="text-sm font-medium">Password</label>
-                       <div className="relative">
-                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                         <Input
-                           type="password"
-                           required
-                           placeholder="••••••••"
-                           className="pl-10"
-                           value={password}
-                           onChange={(e) => setPassword(e.target.value)}
-                         />
-                       </div>
-                    </div>
+                    {!isGoogleSignup && (
+                      <div className="space-y-2 md:col-span-2">
+                         <label className="text-sm font-medium">Password</label>
+                         <div className="relative">
+                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                           <Input
+                             type="password"
+                             required
+                             placeholder="••••••••"
+                             className="pl-10"
+                             value={password}
+                             onChange={(e) => setPassword(e.target.value)}
+                           />
+                         </div>
+                      </div>
+                    )}
 
                     {selectedRole === "influencer" && (
                       <>
@@ -222,7 +326,7 @@ export default function SignupPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Instagram Username</label>
+                          <label className="text-sm font-medium">Instagram Username <span className="text-red-500">*</span></label>
                           <Input
                             type="text"
                             placeholder="@username"
@@ -231,7 +335,7 @@ export default function SignupPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">TikTok Username</label>
+                          <label className="text-sm font-medium">TikTok Username <span className="text-red-500">*</span></label>
                           <Input
                             type="text"
                             placeholder="@username"
@@ -240,13 +344,14 @@ export default function SignupPage() {
                           />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                          <label className="text-sm font-medium">YouTube Channel URL</label>
+                          <label className="text-sm font-medium">YouTube Channel URL <span className="text-red-500">*</span></label>
                           <Input
                             type="url"
                             placeholder="https://youtube.com/c/yourchannel"
                             value={youtube}
                             onChange={(e) => setYoutube(e.target.value)}
                           />
+                          <p className="text-xs text-muted-foreground">At least one social media account is required</p>
                         </div>
                       </>
                     )}
@@ -264,11 +369,12 @@ export default function SignupPage() {
                           />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                          <label className="text-sm font-medium">Company Website</label>
+                          <label className="text-sm font-medium">Company Website <span className="text-red-500">*</span></label>
                           <div className="relative">
                              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                              <Input
                                type="url"
+                               required
                                placeholder="https://yourbrand.com"
                                className="pl-10"
                                value={website}
@@ -285,11 +391,17 @@ export default function SignupPage() {
                       type="button"
                       variant="outline"
                       className="flex-1"
-                      onClick={() => { setStep("role"); setSelectedRole(null); }}
+                      onClick={() => { 
+                        setStep("role"); 
+                        setSelectedRole(null);
+                        // Reset Google state when going back
+                        setGoogleCredential(null);
+                        setIsGoogleSignup(false);
+                      }}
                     >
                       Back
                     </Button>
-                    <Button type="submit" disabled={isLoading} className="flex-1 gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0">
+                    <Button type="submit" disabled={isLoading || !isFormValid()} className="flex-1 gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0">
                       {isLoading ? "Creating..." : "Complete Sign Up"} <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
@@ -308,7 +420,11 @@ export default function SignupPage() {
                       onSuccess={handleGoogleSuccess}
                       onError={() => toast.error("Google login failed")}
                       width="350px"
+                      text={isGoogleSignup ? "continue_with" : "signup_with"}
                     />
+                    {isGoogleSignup && (
+                      <p className="text-xs text-muted-foreground mt-2">Google account connected - complete your profile below</p>
+                    )}
                   </div>
                 </form>
               </CardContent>

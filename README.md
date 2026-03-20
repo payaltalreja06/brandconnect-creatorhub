@@ -138,12 +138,33 @@ npm run dev
      - `VITE_API_URL=http://localhost:5000/api/auth`
 
 ### Backend route
-- POST `/api/auth/google` expects `{ credential, role }` from frontend `GoogleLogin`
-- Verifies token with `google-auth-library` and issues app JWT
+- POST `/api/auth/google` expects `{ credential, role?, profile?, brand? }` 
+- **Multi-layer security**:
+  - Verifies Google OAuth token
+  - Checks `signupCompleted` flag for existing users
+  - Validates profile completeness (social media handles for influencers, website for brands)
+  - Only allows login for users who completed full signup process
+- **Signup**: Sets `signupCompleted: true` when creating new accounts
+
+### Database Schema
+- **User model** includes `signupCompleted: Boolean` flag (default: false)
+- Ensures only properly onboarded users can access the platform
+- **Migration Required**: Run `node migrate-users.js` to update existing users with complete profiles
+
+### Signup Validation
+- **Regular Signup**: Name, email, password, and profile fields required
+  - **Influencers**: At least one social media handle (Instagram/TikTok/YouTube) required
+  - **Brands**: Website required
+- **Google Signup**: Email, name/brand name required; profile fields optional
+  - Users can add social media/website after signup
+- Form validation prevents submission until required fields are complete
 
 ### Frontend
 - `src/App.tsx` now uses `GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}`
-- `src/pages/LoginPage.tsx` and `SignupPage.tsx` send the `credential` to backend `/api/auth/google`
+- `src/pages/LoginPage.tsx` and `SignupPage.tsx` both support Google OAuth
+- **Login Flow**: Google OAuth → Multiple security checks → Login only if fully signed up
+- **Signup Flow**: Google OAuth pre-fills email/name → Complete profile → Set `signupCompleted: true`
+- **Error Handling**: Clear messages for incomplete signup/profile states
 
 ---
 
