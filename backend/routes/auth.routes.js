@@ -59,6 +59,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+    
     if (!user || !user.passwordHash) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -82,33 +83,32 @@ router.post('/google', async (req, res) => {
   try {
     const { credential, role } = req.body; // Role needed if it's their first time
 
-    // In a real scenario with a real GOOGLE_CLIENT_ID, verify the token:
-    // const ticket = await client.verifyIdToken({
-    //   idToken: credential,
-    //   audience: process.env.GOOGLE_CLIENT_ID
-    // });
-    // const payload = ticket.getPayload();
-    
-    // MOCK VERIFICATION for now since we may not have a real client ID:
-    // We expect the frontend to decode the JWT and send email/name in dev mode if we bypass real verification
-    const decodedPayload = jwt.decode(credential);
-    if (!decodedPayload || !decodedPayload.email) {
-      return res.status(400).json({ message: 'Invalid Google Token' });
+    if (!credential) {
+      return res.status(400).json({ message: 'Missing Google credential token' });
     }
 
-    const { email, name, picture } = decodedPayload;
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({ message: 'Invalid Google token' });
+    }
+
+    const { email, name, picture } = payload;
 
     let user = await User.findOne({ email });
 
     if (!user) {
       if (!role) {
-         return res.status(400).json({ message: 'Role is required for new users', needsRole: true });
+        return res.status(400).json({ message: 'Role is required for new users', needsRole: true });
       }
-      
-      // Create new Google User
+
       user = new User({
         email,
-        name,
+        name: name || '',
         role,
         avatar: picture || '',
       });

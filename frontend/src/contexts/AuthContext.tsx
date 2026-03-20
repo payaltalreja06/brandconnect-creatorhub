@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import axios from "axios";
 import { toast } from "sonner"; // For notifications
 
-export const API_URL = "http://localhost:5000/api/auth";
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
 
 type UserRole = "influencer" | "brand" | null;
 

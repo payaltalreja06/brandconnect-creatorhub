@@ -122,7 +122,32 @@ npm run dev
 
 ---
 
-## 📄 Where to Find the Schema
+## � Google OAuth Setup (Implemented)
+1. Create OAuth consent screen in Google Cloud Console:
+   - App name, support email, scopes (email, profile)
+   - Add `http://localhost:8080` as your test user origin (for local development)
+2. Create OAuth 2.0 Client ID (Web application) and add:
+   - Authorized JavaScript origins: `http://localhost:8080`
+   - Authorized redirect URIs: `http://localhost:5000/api/auth/google/callback` (if you use code flow)
+3. Set secrets:
+   - Backend: `backend/.env`:
+     - `GOOGLE_CLIENT_ID=...`
+     - `GOOGLE_CLIENT_SECRET=...`
+   - Frontend: `frontend/.env`:
+     - `VITE_GOOGLE_CLIENT_ID=...`
+     - `VITE_API_URL=http://localhost:5000/api/auth`
+
+### Backend route
+- POST `/api/auth/google` expects `{ credential, role }` from frontend `GoogleLogin`
+- Verifies token with `google-auth-library` and issues app JWT
+
+### Frontend
+- `src/App.tsx` now uses `GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}`
+- `src/pages/LoginPage.tsx` and `SignupPage.tsx` send the `credential` to backend `/api/auth/google`
+
+---
+
+## �📄 Where to Find the Schema
 - **MongoDB schema**: `backend/schema.txt`
 - Use this file to understand the database collections and document shapes the frontend expects.
 
