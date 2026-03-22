@@ -1,221 +1,147 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap, User, Building2, ArrowRight, Mail, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Zap, Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { useAuth, API_URL } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { GoogleLogin } from "@react-oauth/google";
-import axios from "axios";
 
 export default function LoginPage() {
-  const [step, setStep] = useState<"role" | "credentials">("role");
-  const [selectedRole, setSelectedRole] = useState<"influencer" | "brand" | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const { login, isLoggedIn, user: authUser } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn && authUser) {
+      if (!authUser.setupComplete) {
+        navigate("/complete-profile");
+      } else {
+        const dest = authUser.role === "influencer" ? "/influencer/dashboard" : "/brand/dashboard";
+        navigate(dest);
+      }
+    }
+  }, [isLoggedIn, authUser, navigate]);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleRoleSelect = (role: "influencer" | "brand") => {
-    setSelectedRole(role);
-    setStep("credentials");
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRole) return;
-    
+    setError("");
+    if (!email || !password) { setError("Please fill in all fields"); return; }
     setIsLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/login`, { email, password });
-      login(res.data.token, res.data.user);
+      await login(email, password);
       toast.success("Welcome back!");
-      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Login failed");
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr?.response?.data?.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      const res = await axios.post(`${API_URL}/login`, { 
-        credential: credentialResponse.credential
-      });
-      login(res.data.token, res.data.user);
-      toast.success("Successfully logged in with Google!");
-      navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message;
-      
-      if (error.response?.data?.incompleteSignup) {
-        toast.error("Please complete your signup process first.");
-        navigate('/signup');
-        return;
-      }
-      
-      if (error.response?.data?.incompleteProfile) {
-        toast.error("Please complete your signup first. Your profile is missing required information.");
-        navigate('/signup');
-        return;
-      }
-      
-      toast.error(errorMessage || "Google Login failed");
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background gradient blobs */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-accent/10 blur-3xl" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
         className="w-full max-w-md"
       >
-        {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
             <Zap className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-bold text-2xl tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            CollabHub
+            Collabrix
           </span>
         </div>
 
-        {step === "role" ? (
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
-              <p className="text-muted-foreground">How would you like to sign in?</p>
-            </div>
+        <Card className="shadow-xl border-border/50">
+          <CardHeader className="pb-4 text-center">
+            <h1 className="text-2xl font-bold">Welcome back</h1>
+            <p className="text-muted-foreground text-sm">Sign in to your account</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center"
+                >
+                  {error}
+                </motion.div>
+              )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card
-                className="cursor-pointer hover:shadow-md hover:border-accent transition-all group"
-                onClick={() => handleRoleSelect("influencer")}
-              >
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                    <User className="w-7 h-7 text-accent" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">I'm an Influencer</h3>
-                    <p className="text-sm text-muted-foreground">Manage content, analyze metrics & connect with brands</p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card
-                className="cursor-pointer hover:shadow-md hover:border-primary transition-all group"
-                onClick={() => handleRoleSelect("brand")}
-              >
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Building2 className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">I'm a Brand</h3>
-                    <p className="text-sm text-muted-foreground">Discover influencers, manage campaigns & track ROI</p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </CardContent>
-              </Card>
-            </motion.div>
-            <div className="mt-8 text-center text-sm text-muted-foreground">
-              Don't have an account? <Link to="/signup" className="text-primary hover:underline font-medium">Sign up</Link>
-            </div>
-          </div>
-        ) : (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${selectedRole === "influencer" ? "bg-accent/10" : "bg-primary/10"}`}>
-                    {selectedRole === "influencer" ? <User className="w-6 h-6 text-accent" /> : <Building2 className="w-6 h-6 text-primary" />}
-                  </div>
-                  <h2 className="text-xl font-bold">
-                    Sign in as {selectedRole === "influencer" ? "Influencer" : "Brand"}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">Enter your credentials to continue</p>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    className="pl-10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                    autoComplete="email"
+                  />
                 </div>
+              </div>
 
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="you@example.com"
-                        className="pl-10"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        className="pl-10"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <Button type="submit" disabled={isLoading} className="w-full gap-2">
-                    {isLoading ? "Signing In..." : "Sign In"} <ArrowRight className="w-4 h-4" />
-                  </Button>
-
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center flex-col items-center pb-2">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={() => toast.error("Google login failed")}
-                      width="350px"
-                    />
-                  </div>
-
-                  <Button
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="pl-10 pr-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    autoComplete="current-password"
+                  />
+                  <button
                     type="button"
-                    variant="ghost"
-                    className="w-full"
-                    onClick={() => { setStep("role"); setSelectedRole(null); }}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    ← Choose different role
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-primary hover:underline font-medium">
+                Sign up
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
     </div>
   );

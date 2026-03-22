@@ -1,185 +1,122 @@
-# Brand-Influencer Platform (MERN)
+# Collabrix (Brand-Influencer Platform)
 
-This repository contains a prototype **brand-influencer marketplace** built with a **MERN** stack (MongoDB + Express + React + Node). It is designed as a foundation for building a scalable marketplace where brands can find and collaborate with creators (influencers), manage campaigns, chat, and track payments.
-
----
-
-## 📌 What’s Included
-
-### ✅ Frontend (React + TypeScript)
-- Built with **Vite**
-- UI components from **shadcn/ui** (Radix + Tailwind)
-- Pages for:
-  - Brand dashboard, campaigns, discover, payments, messages
-  - Influencer dashboard, campaigns, messages, profile, analytics
-  - Public landing and login
-- Uses **mock data** in `frontend/src/data/dummy.ts` (placeholder until backend is integrated)
-
-### ✅ Backend (Express + TypeScript)
-- Basic project structure in `backend/`
-- MongoDB connectivity via **mongoose**
-- Models created for:
-  - Users (brands + influencers)
-  - Campaigns
-  - Chat threads + messages
-  - Payments
-  - Notifications
-- JWT-based auth assumed (to be implemented)
-
-### ✅ API Documentation (Ready-to-use)
-All endpoint contracts are documented below so frontend and QA teams can integrate and test immediately.
-
-## 🧩 API Endpoint Reference
-
-> All endpoints requiring authentication expect an `Authorization: Bearer <token>` header.
-
-### Auth
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/auth/register` | POST | Register a user (brand or influencer) |
-| `/api/auth/login` | POST | Login and receive JWT |
-| `/api/auth/me` | GET | Get current user profile |
-
-
-### Users / Search
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/users/me` | GET | Get current user profile |
-| `/api/users/me` | PATCH | Update current user profile |
-| `/api/users/search` | GET | Search for influencers/brands (filter by role/domain/location/page) |
-
-
-### Campaigns
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/campaigns` | GET | List campaigns (filter by role/status/brand/influencer) |
-| `/api/campaigns` | POST | Create a campaign (brand only) |
-| `/api/campaigns/:id` | GET | Get campaign detail |
-| `/api/campaigns/:id` | PATCH | Update campaign (status, deliverables, etc.) |
-| `/api/campaigns/:id/assign` | POST | Assign influencer to campaign |
-| `/api/campaigns/:id/status` | POST | Update campaign status |
-
-
-### Chat (Threads + Messages)
-
-#### Threads
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/chat/threads` | GET | List current user threads |
-| `/api/chat/threads` | POST | Create a new thread |
-| `/api/chat/threads/:id` | GET | Get thread details |
-
-#### Messages
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/chat/threads/:id/messages` | GET | List messages in a thread (pagination) |
-| `/api/chat/threads/:id/messages` | POST | Send a message |
-
-
-### Payments
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/payments` | GET | List payments (filter by user, status, campaign) |
-| `/api/payments/:id` | GET | Get payment detail |
-| `/api/payments/:id/status` | POST | Update payment status |
-
-
-### Notifications
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/notifications` | GET | List user notifications |
-| `/api/notifications/:id/read` | POST | Mark a notification as read |
-| `/api/notifications/mark-all-read` | POST | Mark all notifications as read |
+Collabrix is a full-stack **MERN** (MongoDB, Express, React, Node.js) platform designed for brand and influencer collaborations. It features real-time communication, automated notifications, campaign management, and detailed analytics.
 
 ---
 
-## 🚀 Getting Started (Local Development)
+## 🚀 Features
 
-### Prerequisites
-- Node.js (>= 18)
-- MongoDB running locally (default: `mongodb://localhost:27017/brand-influencer`)
+### ✅ Core Functionality
+- **Dual Roles**: Separate dashboards and workflows for **Brands** and **Influencers**.
+- **Campaign Management**: Brands can create campaigns; influencers can pitch or accept invitations.
+- **Real-time Chat**: Fully integrated messaging system powered by **Socket.IO**.
+- **Smart Notifications**: Real-time alerts for new requests, messages, and campaign updates.
+- **Analytics Dashboard**: Performance tracking for influencers (YT/IG stats) and brands (ROI/Spending).
+- **Profile Marketplace**: Discover influencers by domain, location, and engagement.
 
-### Run Frontend
-```bash
-cd frontend
-npm install
-npm run dev
+### ✅ Technical Excellence
+- **Tab Isolation**: Independent sessions per browser tab using `sessionStorage`.
+- **Protected Routes**: Role-based access control for all internal pages.
+- **Responsive UI**: Modern, dark-themed interface built with **Tailwind CSS** and **Framer Motion**.
+- **Mock Data & Seeding**: Robust seeding scripts for instant prototype testing.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Shadcn UI, Framer Motion, Axios, Socket.IO Client.
+- **Backend**: Node.js, Express, MongoDB (Mongoose), JWT Authentication, Socket.IO.
+
+---
+
+## ⚙️ Environment Setup
+
+Create `.env` files in both `frontend` and `backend` directories.
+
+### 📂 Backend (`backend/.env`)
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://payal08:A6bOLU8T0YAkIPZY@cluster0.ez6bp5h.mongodb.net/?appName=Cluster0
+JWT_SECRET="abf45b6b7b@b3b4b2#$$$%%512346"
+NODE_ENV=development
+FRONTEND_ORIGIN=http://localhost:8080
 ```
 
-### Run Backend (prototype)
+### 📂 Frontend (`frontend/.env`)
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+```
+
+---
+
+## 🏃 Quick Start
+
+### 1. Install Dependencies
 ```bash
+# Backend
 cd backend
 npm install
+
+# Frontend
+cd ../frontend
+npm install
+```
+
+
+```
+
+### 3. Run the Application
+Open two terminals:
+
+**Terminal 1 (Backend):**
+```bash
+cd backend
 npm run dev
 ```
 
-> Note: Backend is scaffolded but may require implementation of auth/routes before it functions fully.
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm run dev
+```
+
+The app will be available at `http://localhost:8080`.
 
 ---
 
-## � Google OAuth Setup (Implemented)
-1. Create OAuth consent screen in Google Cloud Console:
-   - App name, support email, scopes (email, profile)
-   - Add `http://localhost:8080` as your test user origin (for local development)
-2. Create OAuth 2.0 Client ID (Web application) and add:
-   - Authorized JavaScript origins: `http://localhost:8080`
-   - Authorized redirect URIs: `http://localhost:5000/api/auth/google/callback` (if you use code flow)
-3. Set secrets:
-   - Backend: `backend/.env`:
-     - `GOOGLE_CLIENT_ID=...`
-     - `GOOGLE_CLIENT_SECRET=...`
-   - Frontend: `frontend/.env`:
-     - `VITE_GOOGLE_CLIENT_ID=...`
-     - `VITE_API_URL=http://localhost:5000/api/auth`
+## 🔐 Test Credentials
 
-### Backend route
-- POST `/api/auth/google` expects `{ credential, role?, profile?, brand? }` 
-- **Multi-layer security**:
-  - Verifies Google OAuth token
-  - Checks `signupCompleted` flag for existing users
-  - Validates profile completeness (social media handles for influencers, website for brands)
-  - Only allows login for users who completed full signup process
-- **Signup**: Sets `signupCompleted: true` when creating new accounts
+Use these accounts to explore the platform after seeding:
 
-### Database Schema
-- **User model** includes `signupCompleted: Boolean` flag (default: false)
-- Ensures only properly onboarded users can access the platform
-- **Migration Required**: Run `node migrate-users.js` to update existing users with complete profiles
-
-### Signup Validation
-- **Regular Signup**: Name, email, password, and profile fields required
-  - **Influencers**: At least one social media handle (Instagram/TikTok/YouTube) required
-  - **Brands**: Website required
-- **Google Signup**: Email, name/brand name required; profile fields optional
-  - Users can add social media/website after signup
-- Form validation prevents submission until required fields are complete
-
-### Frontend
-- `src/App.tsx` now uses `GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}`
-- `src/pages/LoginPage.tsx` and `SignupPage.tsx` both support Google OAuth
-- **Login Flow**: Google OAuth → Multiple security checks → Login only if fully signed up
-- **Signup Flow**: Google OAuth pre-fills email/name → Complete profile → Set `signupCompleted: true`
-- **Error Handling**: Clear messages for incomplete signup/profile states
+| Role | Email | Password |
+|---|---|---|
+| **Influencer** | `priya@collabrix.com` | `password123` |
+| **Influencer** | `ravi@collabrix.com` | `password123` |
+| **Brand** | `glowskin@collabrix.com` | `password123` |
+| **Brand** | `technova@collabrix.com` | `password123` |
 
 ---
 
-## �📄 Where to Find the Schema
-- **MongoDB schema**: `backend/schema.txt`
-- Use this file to understand the database collections and document shapes the frontend expects.
+## 📁 Project Structure
+
+```text
+brand-influencer/
+├── backend/
+│   ├── models/       # Mongoose Schemas
+│   ├── routes/       # API Endpoints
+│   ├── middleware/   # Auth & Role guards
+│   ├── server.js     # Entry point & Socket.IO
+│   └── seed.js       # Database seeder
+├── frontend/
+│   ├── src/
+│   │   ├── components/  # Reusable UI
+│   │   ├── contexts/    # Auth, Chat, Notifications
+│   │   ├── pages/       # Dashboard & Feature pages
+│   │   ├── lib/         # API & Socket config
+│   │   └── App.tsx      # Routing
+```
 
 ---
 
-## 🛠️ Next Steps (Recommended)
-1. Implement backend routes based on the API contract in this README
-2. Add authentication (JWT) and route guards for protected endpoints
-3. Replace frontend mock data (`dummy.ts`) with REST API calls
-4. Add unit/API tests (Postman/Newman) based on the test cases implied by the endpoint contracts
-
----
-
-If you want, I can also generate a **Postman collection** or an **OpenAPI (Swagger)** spec from the API contract for easier team onboarding.
+*Note: This project is a prototype. Ensure security audits and environment variable rotations before production use.*

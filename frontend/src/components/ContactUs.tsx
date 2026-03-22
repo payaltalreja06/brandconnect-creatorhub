@@ -16,7 +16,7 @@ export default function ContactUs() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate API call to send email
     setTimeout(() => {
       setIsSubmitting(false);
@@ -41,7 +41,7 @@ export default function ContactUs() {
           </span>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Contact Us</h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Have questions about CollabHub? Want to partner with us? Fill out the form below and our team will get back to you shortly.
+            Have questions about Collabrix? Want to partner with us? Fill out the form below and our team will get back to you shortly.
           </p>
         </motion.div>
 
@@ -60,7 +60,7 @@ export default function ContactUs() {
                   <p className="opacity-90 leading-relaxed mb-8">
                     Whether you are an influencer looking for tips, or a brand needing help setting up a campaign, we are here to help.
                   </p>
-                  
+
                   <div className="space-y-6">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -68,7 +68,7 @@ export default function ContactUs() {
                       </div>
                       <div>
                         <p className="text-sm opacity-80 mb-0.5">Email us</p>
-                        <p className="font-medium">support@collabhub.com</p>
+                        <p className="font-medium">support@collabrix.com</p>
                       </div>
                     </div>
                   </div>
@@ -82,9 +82,9 @@ export default function ContactUs() {
                     <label className="text-sm font-medium text-gray-700">Name</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input 
+                      <Input
                         required
-                        placeholder="Your full name" 
+                        placeholder="Your full name"
                         className="pl-10 bg-gray-50/50"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -96,10 +96,10 @@ export default function ContactUs() {
                     <label className="text-sm font-medium text-gray-700">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input 
+                      <Input
                         required
                         type="email"
-                        placeholder="you@example.com" 
+                        placeholder="you@example.com"
                         className="pl-10 bg-gray-50/50"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -111,9 +111,9 @@ export default function ContactUs() {
                     <label className="text-sm font-medium text-gray-700">Message</label>
                     <div className="relative">
                       <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                      <Textarea 
+                      <Textarea
                         required
-                        placeholder="How can we help you?" 
+                        placeholder="How can we help you?"
                         className="pl-10 min-h-[120px] bg-gray-50/50 resize-y"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
@@ -121,8 +121,8 @@ export default function ContactUs() {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting}
                     className="w-full gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600 border-0 h-11"
                   >

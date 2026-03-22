@@ -119,7 +119,7 @@ export default function LandingPage() {
             <div className="rounded-2xl bg-primary p-10 md:p-14">
               <Users className="w-10 h-10 text-primary-foreground mx-auto mb-4" />
               <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-3">Ready to grow your reach?</h2>
-              <p className="text-primary-foreground/70 mb-6">Join thousands of creators and brands already on CollabHub.</p>
+              <p className="text-primary-foreground/70 mb-6">Join thousands of creators and brands already on Collabrix.</p>
               <Link to="/login">
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 px-8">
                   Get Started <TrendingUp className="w-4 h-4 ml-2" />

@@ -2,13 +2,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ChatProvider } from "@/contexts/ChatContext";
 
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
+import CompleteProfilePage from "@/pages/CompleteProfilePage";
 import NotFound from "@/pages/NotFound";
 import InfluencersPage from "@/pages/InfluencersPage";
 
@@ -35,47 +37,59 @@ import BrandProfilePage from "@/pages/BrandProfilePage";
 
 const queryClient = new QueryClient();
 
+// Protected route wrapper
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: "influencer" | "brand" }) {
+  const { isLoggedIn, role, isLoading } = useAuth();
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
+  if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || '1234567890-mock.apps.googleusercontent.com'}>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-            {/* Public */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/influencers" element={<InfluencersPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
+      <AuthProvider>
+        <NotificationProvider>
+          <ChatProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* ... */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/influencers" element={<InfluencersPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfilePage /></ProtectedRoute>} />
 
-            {/* Influencer routes */}
-            <Route path="/influencer/dashboard" element={<InfluencerLayout><InfluencerDashboard /></InfluencerLayout>} />
-            <Route path="/influencer/analytics" element={<InfluencerLayout><InfluencerAnalytics /></InfluencerLayout>} />
-            <Route path="/influencer/campaigns" element={<InfluencerLayout><InfluencerCampaigns /></InfluencerLayout>} />
-            <Route path="/influencer/brands" element={<InfluencerLayout><InfluencerBrands /></InfluencerLayout>} />
-            <Route path="/influencer/brand/:id" element={<InfluencerLayout><BrandProfilePage /></InfluencerLayout>} />
-            <Route path="/influencer/messages" element={<InfluencerLayout><InfluencerMessages /></InfluencerLayout>} />
-            <Route path="/influencer/revenue" element={<InfluencerLayout><InfluencerRevenue /></InfluencerLayout>} />
-            <Route path="/influencer/schedule" element={<InfluencerLayout><InfluencerSchedule /></InfluencerLayout>} />
-            <Route path="/influencer/profile" element={<InfluencerLayout><InfluencerProfile /></InfluencerLayout>} />
+                {/* Influencer routes */}
+                <Route path="/influencer/dashboard" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerDashboard /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/analytics" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerAnalytics /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/campaigns" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerCampaigns /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/brands" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerBrands /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/brand/:id" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><BrandProfilePage /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/messages" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerMessages /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/revenue" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerRevenue /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/schedule" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerSchedule /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/profile" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerProfile /></InfluencerLayout></ProtectedRoute>} />
 
-            {/* Brand routes */}
-            <Route path="/brand/dashboard" element={<BrandLayout><BrandDashboard /></BrandLayout>} />
-            <Route path="/brand/discover" element={<BrandLayout><BrandDiscover /></BrandLayout>} />
-            <Route path="/brand/influencer/:id" element={<BrandLayout><InfluencerProfilePage /></BrandLayout>} />
-            <Route path="/brand/campaigns" element={<BrandLayout><BrandCampaigns /></BrandLayout>} />
-            <Route path="/brand/messages" element={<BrandLayout><BrandMessages /></BrandLayout>} />
-            <Route path="/brand/analytics" element={<BrandLayout><BrandAnalytics /></BrandLayout>} />
-            <Route path="/brand/payments" element={<BrandLayout><BrandPayments /></BrandLayout>} />
-            <Route path="/brand/profile" element={<BrandLayout><BrandProfile /></BrandLayout>} />
+                {/* Brand routes */}
+                <Route path="/brand/dashboard" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandDashboard /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/discover" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandDiscover /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/influencer/:id" element={<ProtectedRoute requiredRole="brand"><BrandLayout><InfluencerProfilePage /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/campaigns" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandCampaigns /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/messages" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandMessages /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/analytics" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandAnalytics /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/payments" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandPayments /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/profile" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandProfile /></BrandLayout></ProtectedRoute>} />
 
-            <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </GoogleOAuthProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ChatProvider>
+        </NotificationProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

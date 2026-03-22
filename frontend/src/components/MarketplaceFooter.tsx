@@ -44,7 +44,7 @@ export default function MarketplaceFooter() {
                 className="font-bold text-lg text-white tracking-tight"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                CollabHub
+                Collabrix
               </span>
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed">
@@ -87,7 +87,7 @@ export default function MarketplaceFooter() {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} CollabHub. All rights reserved.
+            © {new Date().getFullYear()} Collabrix. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
             {/* Social Icons */}

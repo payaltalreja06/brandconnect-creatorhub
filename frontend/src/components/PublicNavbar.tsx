@@ -26,7 +26,7 @@ export default function PublicNavbar() {
             className="font-bold text-lg tracking-tight"
             style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
-            CollabHub
+            Collabrix
           </span>
         </Link>
 
@@ -38,11 +38,10 @@ export default function PublicNavbar() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-foreground ${
-                  location.pathname === link.path
+                className={`text-sm font-medium transition-colors hover:text-foreground ${location.pathname === link.path
                     ? "text-foreground"
                     : "text-muted-foreground"
-                }`}
+                  }`}
                 onClick={(e) => {
                   if (isHashLink && location.pathname === "/") {
                     e.preventDefault();

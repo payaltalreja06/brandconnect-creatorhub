@@ -1,56 +1,34 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
-const SocialsSchema = new mongoose.Schema({
-  youtube: { type: String, default: "" },
-  instagram: { type: String, default: "" },
-  tiktok: { type: String, default: "" }
-});
-
-const ProfileSchema = new mongoose.Schema({
-  domains: { type: [String], default: [] },
-  platforms: { type: [String], default: [] },
-  followers: { type: Number, default: 0 },
-  engagementRate: { type: Number, default: 0 },
-  rateMin: { type: Number, default: 0 },
-  rateMax: { type: Number, default: 0 },
-  verified: { type: Boolean, default: false },
-  healthScore: { type: Number, default: 0 },
-  socials: { type: SocialsSchema, default: () => ({}) }
-});
-
-const BrandSubSchema = new mongoose.Schema({
-  industry: { type: String, default: "" },
-  domain: { type: String, default: "" },
-  budget: {
-    min: { type: Number, default: 0 },
-    max: { type: Number, default: 0 }
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { 
+    type: String, 
+    required: function() { return !this.googleId; }, 
+    minlength: 6 
   },
-  website: { type: String, default: "" },
-  contactEmail: { type: String, default: "" },
-  campaignsCount: { type: Number, default: 0 }
+  googleId: { type: String, default: null },
+  role: { type: String, enum: ['influencer', 'brand'], default: 'influencer' },
+  avatar: { type: String, default: '' },
+  setupComplete: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
 });
 
-const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String }, // Optional for Google OAuth users
-  role: { type: String, enum: ['influencer', 'brand'], required: true },
-  name: { type: String, required: true },
-  avatar: { type: String, default: "" },
-  handle: { type: String, default: "" },
-  bio: { type: String, default: "" },
-  location: { type: String, default: "" },
-  signupCompleted: { type: Boolean, default: false }, // Explicit flag for completed signup
-  status: { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
-  settings: {
-    language: { type: String, default: "en" },
-    notificationsEnabled: { type: Boolean, default: true }
-  },
-  profile: { type: ProfileSchema, default: () => ({}) }, // Only used if role === 'influencer'
-  brand: { type: BrandSubSchema, default: () => ({}) }   // Only used if role === 'brand'
-}, { timestamps: true });
+userSchema.pre('save', async function () {
+  if (!this.password || !this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 12);
+});
 
-UserSchema.index({ role: 1 });
-UserSchema.index({ handle: 1 });
-UserSchema.index({ status: 1 });
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
-module.exports = mongoose.model('User', UserSchema);
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
+
+module.exports = mongoose.model('User', userSchema);

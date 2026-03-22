@@ -1,19 +1,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import axios from "axios";
-import { toast } from "sonner"; // For notifications
-
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
+import { authApi } from "@/lib/api";
+import { connectSocket, disconnectSocket } from "@/lib/socket";
 
 type UserRole = "influencer" | "brand" | null;
 
 export interface UserProfile {
-  id?: string;
-  _id?: string;
+  id: string;
   email: string;
   name: string;
   role: UserRole;
   avatar?: string;
-  handle?: string;
+  setupComplete?: boolean;
 }
 
 interface AuthContextType {
@@ -21,7 +18,10 @@ interface AuthContextType {
   role: UserRole;
   userName: string;
   user: UserProfile | null;
-  login: (token: string, userData: UserProfile) => void;
+  token: string | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -30,7 +30,10 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   userName: "",
   user: null,
-  login: () => {},
+  token: null,
+  isLoading: true,
+  login: async () => {},
+  register: async () => {},
   logout: () => {},
 });
 
@@ -41,49 +44,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>(null);
   const [userName, setUserName] = useState("");
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Restore session on mount
   useEffect(() => {
-    // Check locally for a token
-    const token = localStorage.getItem("auth_token");
-    const storedUserStr = localStorage.getItem("auth_user");
-    if (token && storedUserStr) {
+    const savedToken = sessionStorage.getItem("token");
+    const savedUser = sessionStorage.getItem("user");
+    if (savedToken && savedUser) {
       try {
-        const storedUser = JSON.parse(storedUserStr);
+        const parsedUser: UserProfile = JSON.parse(savedUser);
+        setToken(savedToken);
+        setUser(parsedUser);
+        setRole(parsedUser.role);
+        setUserName(parsedUser.name);
         setIsLoggedIn(true);
-        setRole(storedUser.role);
-        setUserName(storedUser.name);
-        setUser(storedUser);
-      } catch (e) {
-        console.error("Failed to parse stored user", e);
+        // Connect socket
+        connectSocket(parsedUser.id);
+      } catch {
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
       }
     }
+    setIsLoading(false);
   }, []);
 
-  const login = (token: string, userData: UserProfile) => {
-    localStorage.setItem("auth_token", token);
-    localStorage.setItem("auth_user", JSON.stringify(userData));
+  const setSession = (tokenVal: string, userVal: UserProfile) => {
+    sessionStorage.setItem("token", tokenVal);
+    sessionStorage.setItem("user", JSON.stringify(userVal));
+    setToken(tokenVal);
+    setUser(userVal);
     setIsLoggedIn(true);
-    setRole(userData.role);
-    setUserName(userData.name);
-    setUser(userData);
-    
-    // Set default axios header
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setRole(userVal.role);
+    setUserName(userVal.name);
+    connectSocket(userVal.id);
+  };
+
+  const login = async (email: string, password: string) => {
+    const res = await authApi.login({ email, password });
+    const { token: t, user: u } = res.data;
+    const profile: UserProfile = {
+      id: u.id || u._id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      avatar: u.avatar,
+      setupComplete: u.setupComplete,
+    };
+    setSession(t, profile);
+  };
+
+  const register = async (name: string, email: string, password: string, role: string) => {
+    const res = await authApi.register({ name, email, password, role });
+    const { token: t, user: u } = res.data;
+    const profile: UserProfile = {
+      id: u.id || u._id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      avatar: u.avatar,
+      setupComplete: u.setupComplete,
+    };
+    setSession(t, profile);
   };
 
   const logout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    disconnectSocket();
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setIsLoggedIn(false);
     setRole(null);
     setUserName("");
     setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
-    toast.success("Logged out successfully");
+    setToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, role, userName, user, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, role, userName, user, token, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

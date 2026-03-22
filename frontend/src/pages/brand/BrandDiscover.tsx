@@ -1,32 +1,59 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, MapPin, Users, TrendingUp, Shield, ArrowUpDown } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Users, TrendingUp, Shield, ArrowUpDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { influencers, domains } from "@/data/dummy";
+import { influencerApi } from "@/lib/api";
+import { domains } from "@/data/dummy";
+
+interface InfluencerListing {
+  _id?: string;
+  userId?: string;
+  id?: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  domain: string[];
+  followers: number;
+  engagement: number;
+  rate: string;
+  location: string;
+  verified: boolean;
+  healthScore?: number;
+  domain_list?: string[];
+}
 
 export default function BrandDiscover() {
   const [search, setSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState("all");
   const [sortBy, setSortBy] = useState("followers");
+  const [influencers, setInfluencers] = useState<InfluencerListing[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const filtered = influencers
-    .filter((inf) => {
-      const matchSearch = inf.name.toLowerCase().includes(search.toLowerCase()) || inf.handle.toLowerCase().includes(search.toLowerCase());
-      const matchDomain = selectedDomain === "all" || inf.domain.includes(selectedDomain);
-      return matchSearch && matchDomain;
-    })
-    .sort((a, b) => {
-      if (sortBy === "followers") return b.followers - a.followers;
-      if (sortBy === "engagement") return b.engagement - a.engagement;
-      if (sortBy === "health") return (b.healthScore || 0) - (a.healthScore || 0);
-      return 0;
-    });
+  useEffect(() => {
+    const fetchInfluencers = async () => {
+      setLoading(true);
+      try {
+        const res = await influencerApi.getAll({ search, domain: selectedDomain, sortBy });
+        setInfluencers(res.data || []);
+      } catch {
+        // Fallback to dummy
+        const { influencers: dummy } = await import("@/data/dummy");
+        setInfluencers(dummy as unknown as InfluencerListing[]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const debounce = setTimeout(fetchInfluencers, 300);
+    return () => clearTimeout(debounce);
+  }, [search, selectedDomain, sortBy]);
+
+  const getProfileId = (inf: InfluencerListing) => inf.userId || inf._id || inf.id;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
@@ -66,75 +93,68 @@ export default function BrandDiscover() {
 
       {/* Domain chips */}
       <div className="flex flex-wrap gap-2">
-        <Badge
-          variant={selectedDomain === "all" ? "default" : "outline"}
-          className="cursor-pointer"
-          onClick={() => setSelectedDomain("all")}
-        >
-          All
-        </Badge>
+        <Badge variant={selectedDomain === "all" ? "default" : "outline"} className="cursor-pointer" onClick={() => setSelectedDomain("all")}>All</Badge>
         {domains.map(d => (
-          <Badge
-            key={d}
-            variant={selectedDomain === d ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setSelectedDomain(d)}
-          >
-            {d}
-          </Badge>
+          <Badge key={d} variant={selectedDomain === d ? "default" : "outline"} className="cursor-pointer" onClick={() => setSelectedDomain(d)}>{d}</Badge>
         ))}
       </div>
 
       {/* Results */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((inf, i) => (
-          <motion.div key={inf.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/brand/influencer/${inf.id}`)}>
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3 mb-3">
-                  <img src={inf.avatar} alt={inf.name} className="w-12 h-12 rounded-xl bg-muted" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-semibold truncate">{inf.name}</h3>
-                      {inf.verified && <Shield className="w-4 h-4 text-accent shrink-0" />}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{inf.handle}</p>
-                  </div>
-                  {inf.healthScore && (
-                    <div className="text-center shrink-0">
-                      <div className="w-10 h-10 rounded-full border-2 border-accent flex items-center justify-center">
-                        <span className="text-xs font-bold">{inf.healthScore}</span>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {influencers.map((inf, i) => (
+            <motion.div key={getProfileId(inf) || i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/brand/influencer/${getProfileId(inf)}`)}>
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3 mb-3">
+                    <img src={inf.avatar} alt={inf.name} className="w-12 h-12 rounded-xl bg-muted" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-semibold truncate">{inf.name}</h3>
+                        {inf.verified && <Shield className="w-4 h-4 text-accent shrink-0" />}
                       </div>
+                      <p className="text-sm text-muted-foreground">{inf.handle}</p>
                     </div>
-                  )}
-                </div>
-                <div className="flex gap-2 mb-3 flex-wrap">
-                  {inf.domain.map(d => <Badge key={d} variant="secondary" className="text-xs">{d}</Badge>)}
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <p className="text-sm font-bold">{(inf.followers / 1000000).toFixed(1)}M</p>
-                    <p className="text-xs text-muted-foreground">Followers</p>
+                    {inf.healthScore && (
+                      <div className="text-center shrink-0">
+                        <div className="w-10 h-10 rounded-full border-2 border-accent flex items-center justify-center">
+                          <span className="text-xs font-bold">{inf.healthScore}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold">{inf.engagement}%</p>
-                    <p className="text-xs text-muted-foreground">Engagement</p>
+                  <div className="flex gap-2 mb-3 flex-wrap">
+                    {inf.domain?.map(d => <Badge key={d} variant="secondary" className="text-xs">{d}</Badge>)}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold">{inf.rate.split("-")[0].trim()}</p>
-                    <p className="text-xs text-muted-foreground">Starting</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-sm font-bold">{inf.followers >= 1000000 ? (inf.followers / 1000000).toFixed(1) + "M" : (inf.followers / 1000).toFixed(0) + "K"}</p>
+                      <p className="text-xs text-muted-foreground">Followers</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">{inf.engagement}%</p>
+                      <p className="text-xs text-muted-foreground">Engagement</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold truncate">{inf.rate?.split("-")[0]?.trim() || "—"}</p>
+                      <p className="text-xs text-muted-foreground">Starting</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
-                  <MapPin className="w-3 h-3" /> {inf.location}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+                  <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3" /> {inf.location}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
-      {filtered.length === 0 && (
+      {!loading && influencers.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">No influencers found matching your criteria</div>
       )}
     </div>

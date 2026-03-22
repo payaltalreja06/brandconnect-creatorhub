@@ -9,7 +9,7 @@ const steps = [
   },
   {
     title: "Purchase & Chat Securely",
-    desc: "Safely purchase and communicate through CollabHub. We hold your payment until the work is completed.",
+    desc: "Safely purchase and communicate through Collabrix. We hold your payment until the work is completed.",
     icon: Shield,
   },
   {

@@ -1,31 +1,155 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Youtube, Instagram, Shield, Edit, Plus, Trash } from "lucide-react";
-import { influencers, FAQ } from "@/data/dummy";
+import { Label } from "@/components/ui/label";
+import { MapPin, Youtube, Instagram, Shield, Edit, Plus, Trash, Loader2, Save, X } from "lucide-react";
+import { influencerApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+interface FAQ {
+  question: string;
+  answer: string;
+}
+
+interface Profile {
+  _id?: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  bio: string;
+  location: string;
+  domain: string[];
+  rate: string;
+  engagement: number;
+  followers: number;
+  ytSubscribers: number;
+  instaFollowers: number;
+  verified: boolean;
+  faqs: FAQ[];
+  website?: string;
+  instagram?: string;
+  youtube?: string;
+}
 
 export default function InfluencerProfile() {
-  const profile = influencers[0]; // Current user
-  const [faqs, setFaqs] = useState<FAQ[]>(profile.faqs || []);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Edit profile state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editHandle, setEditHandle] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editRate, setEditRate] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
+
+  // FAQ state
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [newFaqQ, setNewFaqQ] = useState("");
   const [newFaqA, setNewFaqA] = useState("");
   const [isFaqOpen, setIsFaqOpen] = useState(false);
+  const [editFaqIndex, setEditFaqIndex] = useState<number | null>(null);
+  const [savingFaqs, setSavingFaqs] = useState(false);
 
-  const handleAddFaq = () => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const res = await influencerApi.getMe();
+        setProfile(res.data);
+        setFaqs(res.data.faqs || []);
+        setEditName(res.data.name || "");
+        setEditHandle(res.data.handle || "");
+        setEditBio(res.data.bio || "");
+        setEditLocation(res.data.location || "");
+        setEditRate(res.data.rate || "");
+        setEditWebsite(res.data.website || "");
+      } catch {
+        toast.error("Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const res = await influencerApi.updateMe({
+        name: editName,
+        handle: editHandle,
+        bio: editBio,
+        location: editLocation,
+        rate: editRate,
+        website: editWebsite,
+      });
+      setProfile(res.data);
+      setEditOpen(false);
+      toast.success("Profile updated!");
+    } catch {
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddOrEditFaq = () => {
     if (!newFaqQ || !newFaqA) return;
-    setFaqs([...faqs, { question: newFaqQ, answer: newFaqA }]);
+    let updatedFaqs: FAQ[];
+    if (editFaqIndex !== null) {
+      updatedFaqs = faqs.map((f, i) => i === editFaqIndex ? { question: newFaqQ, answer: newFaqA } : f);
+    } else {
+      updatedFaqs = [...faqs, { question: newFaqQ, answer: newFaqA }];
+    }
+    setFaqs(updatedFaqs);
     setNewFaqQ("");
     setNewFaqA("");
+    setEditFaqIndex(null);
     setIsFaqOpen(false);
   };
-  
+
   const handleRemoveFaq = (index: number) => {
     setFaqs(faqs.filter((_, i) => i !== index));
   };
+
+  const startEditFaq = (index: number) => {
+    setEditFaqIndex(index);
+    setNewFaqQ(faqs[index].question);
+    setNewFaqA(faqs[index].answer);
+    setIsFaqOpen(true);
+  };
+
+  const handleSaveFaqs = async () => {
+    setSavingFaqs(true);
+    try {
+      await influencerApi.updateFaqs(faqs);
+      toast.success("FAQs saved! Brands will see these on your profile 🎉");
+    } catch {
+      toast.error("Failed to save FAQs");
+    } finally {
+      setSavingFaqs(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
@@ -34,13 +158,55 @@ export default function InfluencerProfile() {
           <h1 className="text-2xl font-bold">My Profile</h1>
           <p className="text-muted-foreground text-sm">Manage how brands see you</p>
         </div>
-        <Button variant="outline" className="gap-2"><Edit className="w-4 h-4" /> Edit Profile</Button>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Edit className="w-4 h-4" /> Edit Profile
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Edit Profile</DialogTitle></DialogHeader>
+            <div className="space-y-4 pt-2 max-h-[70vh] overflow-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Name</Label>
+                  <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Your name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Handle</Label>
+                  <Input value={editHandle} onChange={e => setEditHandle(e.target.value)} placeholder="@yourhandle" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Bio</Label>
+                <Textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Tell brands about yourself..." rows={3} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Location</Label>
+                  <Input value={editLocation} onChange={e => setEditLocation(e.target.value)} placeholder="City, Country" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Rate</Label>
+                  <Input value={editRate} onChange={e => setEditRate(e.target.value)} placeholder="e.g. ₹50,000 - ₹1,00,000" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Website</Label>
+                <Input value={editWebsite} onChange={e => setEditWebsite(e.target.value)} placeholder="https://yoursite.com" />
+              </div>
+              <Button className="w-full" onClick={handleSaveProfile} disabled={saving}>
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save Changes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
-            <img src={profile.avatar} alt={profile.name} className="w-24 h-24 rounded-2xl bg-muted" />
+            <img src={profile.avatar || user?.avatar} alt={profile.name} className="w-24 h-24 rounded-2xl bg-muted" />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-xl font-bold">{profile.name}</h2>
@@ -48,20 +214,14 @@ export default function InfluencerProfile() {
               </div>
               <p className="text-muted-foreground text-sm">{profile.handle}</p>
               <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                <MapPin className="w-3.5 h-3.5" /> {profile.location}
+                <MapPin className="w-3.5 h-3.5" /> {profile.location || "Location not set"}
               </div>
-              <div className="flex gap-2 mt-3">
-                {profile.domain.map(d => <Badge key={d} variant="secondary">{d}</Badge>)}
+              {profile.bio && <p className="text-sm mt-2 max-w-xl">{profile.bio}</p>}
+              <div className="flex gap-2 mt-3 flex-wrap">
+                {profile.domain?.map(d => <Badge key={d} variant="secondary">{d}</Badge>)}
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm font-medium">Bio</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">{profile.bio}</p>
         </CardContent>
       </Card>
 
@@ -71,11 +231,11 @@ export default function InfluencerProfile() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Youtube className="w-4 h-4 text-red-500" /> YouTube</div>
-              <span className="font-medium">{(profile.ytSubscribers! / 1000000).toFixed(1)}M subscribers</span>
+              <span className="font-medium">{profile.ytSubscribers ? (profile.ytSubscribers / 1000000).toFixed(1) + "M subscribers" : "Not connected"}</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-500" /> Instagram</div>
-              <span className="font-medium">{(profile.instaFollowers! / 1000).toFixed(0)}K followers</span>
+              <span className="font-medium">{profile.instaFollowers ? (profile.instaFollowers / 1000).toFixed(0) + "K followers" : "Not connected"}</span>
             </div>
           </CardContent>
         </Card>
@@ -85,55 +245,105 @@ export default function InfluencerProfile() {
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Rate</span>
-              <span className="font-medium">{profile.rate}</span>
+              <span className="font-medium">{profile.rate || "Not set"}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Engagement Rate</span>
-              <span className="font-medium">{profile.engagement}%</span>
+              <span className="font-medium">{profile.engagement || 0}%</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Total Followers</span>
-              <span className="font-medium">{(profile.followers / 1000000).toFixed(1)}M</span>
+              <span className="font-medium">{profile.followers ? (profile.followers / 1000000).toFixed(1) + "M" : "0"}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* FAQs — brands will see these */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">My FAQs</CardTitle>
-          <Dialog open={isFaqOpen} onOpenChange={setIsFaqOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 gap-1"><Plus className="w-3 h-3" /> Add FAQ</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Add FAQ</DialogTitle></DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Question</label>
-                  <Input value={newFaqQ} onChange={e => setNewFaqQ(e.target.value)} placeholder="e.g. Do you offer UGC?" />
+        <CardHeader className="flex flex-row items-start justify-between pb-2">
+          <div>
+            <CardTitle className="text-sm font-medium">My FAQs for Brands</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              These appear on your public profile so brands can learn about you before reaching out
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Dialog open={isFaqOpen} onOpenChange={(o) => { setIsFaqOpen(o); if (!o) { setEditFaqIndex(null); setNewFaqQ(""); setNewFaqA(""); } }}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-1">
+                  <Plus className="w-3 h-3" /> Add FAQ
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{editFaqIndex !== null ? "Edit FAQ" : "Add FAQ"}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Question</Label>
+                    <Input value={newFaqQ} onChange={e => setNewFaqQ(e.target.value)} placeholder="e.g. Do you offer UGC videos?" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Answer</Label>
+                    <Textarea value={newFaqA} onChange={e => setNewFaqA(e.target.value)} placeholder="Your answer..." rows={3} />
+                  </div>
+                  <Button className="w-full" onClick={handleAddOrEditFaq} disabled={!newFaqQ || !newFaqA}>
+                    {editFaqIndex !== null ? "Update FAQ" : "Add FAQ"}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Answer</label>
-                  <Textarea value={newFaqA} onChange={e => setNewFaqA(e.target.value)} placeholder="e.g. Yes..." rows={3} />
-                </div>
-                <Button className="w-full" onClick={handleAddFaq}>Add FAQ</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {faqs.length === 0 && <p className="text-sm text-muted-foreground">No FAQs added yet.</p>}
-          {faqs.map((faq, i) => (
-            <div key={i} className="group relative border rounded-lg p-3 text-sm">
-              <Button variant="ghost" size="icon" onClick={() => handleRemoveFaq(i)} className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50">
-                <Trash className="w-3 h-3" />
+              </DialogContent>
+            </Dialog>
+
+            {faqs.length > 0 && (
+              <Button size="sm" className="h-8 gap-1" onClick={handleSaveFaqs} disabled={savingFaqs}>
+                {savingFaqs ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                Save FAQs
               </Button>
-              <p className="font-semibold mb-1 pr-6">{faq.question}</p>
-              <p className="text-muted-foreground">{faq.answer}</p>
-            </div>
-          ))}
-        </CardContent>
+            )}
+          </div>
+        </CardHeader>
+          <CardContent className="p-0">
+            {faqs.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p className="text-sm">No FAQs added yet.</p>
+                <p className="text-xs mt-1 italic">Add FAQs to help brands understand your collaboration style</p>
+              </div>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {faqs.map((faq, i) => (
+                  <AccordionItem key={i} value={`item-${i}`} className="border-b border-border/50 last:border-0 px-6 group relative">
+                    <div className="absolute top-4 right-12 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); startEditFaq(i); }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleRemoveFaq(i); }} className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <AccordionTrigger className="hover:no-underline py-5 pr-20 group/trigger">
+                      <span className="text-left font-semibold text-base transition-colors group-hover/trigger:text-primary leading-tight">
+                        {faq.question}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-6 text-muted-foreground text-[15px] leading-relaxed pl-1">
+                      <div className="flex gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0" />
+                        {faq.answer}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+            {faqs.length > 0 && (
+              <div className="p-4 bg-muted/20 border-t border-border/50">
+                <p className="text-xs text-muted-foreground text-center italic">
+                  Changes must be saved using the "Save FAQs" button above to go live.
+                </p>
+              </div>
+            )}
+          </CardContent>
       </Card>
     </div>
   );
