@@ -36,8 +36,8 @@ Create `.env` files in both `frontend` and `backend` directories.
 ### 📂 Backend (`backend/.env`)
 ```env
 PORT=5000
-MONGODB_URI=mongodb+srv://payal08:A6bOLU8T0YAkIPZY@cluster0.ez6bp5h.mongodb.net/?appName=Cluster0
-JWT_SECRET="abf45b6b7b@b3b4b2#$$$%%512346"
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.ez6bp5h.mongodb.net/?appName=Cluster0
+JWT_SECRET="your_sceret_key"
 NODE_ENV=development
 FRONTEND_ORIGIN=http://localhost:8080
 ```
