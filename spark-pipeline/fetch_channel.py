@@ -39,6 +39,7 @@ from pathlib import Path
 import urllib.request
 import urllib.parse
 import urllib.error
+from dotenv import load_dotenv
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -303,11 +304,13 @@ Examples:
     )
     parser.add_argument(
         "--api-key", "-k",
+        dest="api_key",
         default=os.environ.get("YT_API_KEY", ""),
         help="YouTube Data API v3 key. Defaults to $YT_API_KEY env variable.",
     )
     parser.add_argument(
         "--mongo-uri", "-m",
+        dest="mongo_uri",
         default=os.environ.get("MONGO_URI", ""),
         help="MongoDB Connection URI. Defaults to $MONGO_URI.",
     )
@@ -320,8 +323,13 @@ Examples:
 
     args = parser.parse_args()
 
+    # Try loading from .env if not provided or in env vars
     if not args.api_key:
-        log.error("No API key provided! Set $YT_API_KEY.")
+        load_dotenv()
+        args.api_key = os.environ.get("YT_API_KEY", "")
+
+    if not args.api_key:
+        log.error("No API key provided! Set $YT_API_KEY in environment or .env file.")
         sys.exit(1)
 
     # ── Resolve channels to fetch ──────────────────────────────────────────────
@@ -338,7 +346,7 @@ Examples:
         sys.exit(1)
 
     success, failed = [], []
-    for query in args.channel:
+    for query in queries:
         try:
             path = fetch_and_write(query, args.api_key, args.max_videos)
             success.append((query, path))

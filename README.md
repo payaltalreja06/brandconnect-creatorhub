@@ -98,7 +98,25 @@ Use these accounts to explore the platform after seeding:
 
 ---
 
+## 📊 Analytics Pipeline (Spark & Airflow)
+
+The platform includes a dedicated Data Engineering layer for processing YouTube analytics using **PySpark** and **Apache Airflow**.
+
+
+
+### 🔹 Full Stack (Docker & Airflow)
+Automated, production-ready pipeline with scheduling and monitoring.
+1.  **Navigate to pipeline**: `cd spark-pipeline`
+2.  **Start Services**: `docker compose up --build`
+3.  **Access Airflow**: [http://localhost:8181](http://localhost:8181) (User: `admin`, Pass: `admin`)
+4.  **Trigger DAG**: Enable and run the `yt_fetcher` DAG.
+
+
+
+---
+
 ## 📁 Project Structure
+
 
 ```text
 brand-influencer/
@@ -115,6 +133,13 @@ brand-influencer/
 │   │   ├── pages/       # Dashboard & Feature pages
 │   │   ├── lib/         # API & Socket config
 │   │   └── App.tsx      # Routing
+├── spark-pipeline/
+│   ├── jobs/         # PySpark ETL scripts
+│   ├── dags/         # Airflow Pipeline definitions
+│   ├── data/         # Raw and Processed JSON/Parquet storage
+│   ├── Dockerfile    # PySpark Environment
+│   └── orchestrate_etl.ps1 # Lite-mode orchestrator
+
 ```
 
 ---

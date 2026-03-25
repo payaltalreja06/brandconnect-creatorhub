@@ -1,15 +1,4 @@
-# ==============================================================================
-# BrandConnect CreatorHub — Spark Pipeline Requirements
-# ==============================================================================
-# Install:  pip install -r requirements.txt
-#
-# Context:
-#   - This file is used by the Spark Docker container (see Dockerfile)
-#   - Also used for local development (IDE autocomplete, running etl.py locally)
-#   - fetch_channel.py uses stdlib only — no extra pip packages needed
-#   - Airflow runs in its own official Docker image (apache/airflow:2.8.1)
-#     and does NOT use this file
-# ==============================================================================
+
 
 # ── Core ETL (etl.py) ──────────────────────────────────────────────────────────
 pyspark==3.5.0
@@ -19,8 +8,10 @@ pyspark==3.5.0
 # Usage in fetch_channel.py or any script: from dotenv import load_dotenv; load_dotenv()
 python-dotenv==1.0.1
 
-# ── Future: MongoDB Atlas direct write (uncomment when ready) ──────────────────
-pymongo[srv]==4.7.2          # direct Atlas writes from etl.py
+pymongo[srv]==4.7.2
+certifi==2024.2.2
+dnspython==2.6.1
+
 # mongo-spark-connector        # Spark-native MongoDB connector (via spark-submit --packages)
 
 # ── Future: Instagram / Facebook ETL (uncomment when modules are added) ────────

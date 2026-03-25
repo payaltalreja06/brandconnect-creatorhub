@@ -126,6 +126,7 @@ __pycache__/
 *$py.class
 .ipynb_checkpoints/
 .python-version
+.env
 
 # Airflow
 airflow-logs/
@@ -149,4 +150,4 @@ tmp/
 !tsconfig.json
 !components.json
 !*.config.json
-!composer.json
+!composer.json
