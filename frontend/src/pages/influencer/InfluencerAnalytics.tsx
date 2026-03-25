@@ -11,8 +11,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area
 } from "recharts";
+import { Button } from "@/components/ui/button";
 import { analyticsApi } from "@/lib/api";
-import * as dummy from "@/data/dummy";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
@@ -37,9 +37,6 @@ export default function InfluencerAnalytics() {
     fetchAnalytics();
   }, []);
 
-  const ana = data || dummy.ytAnalytics;
-  const insta = data || dummy.instaAnalytics;
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -47,6 +44,32 @@ export default function InfluencerAnalytics() {
       </div>
     );
   }
+
+  // CRITICAL: Force Syncing message if REAL data is missing
+  const hasRealData = data && data.ytOverview && (data.ytOverview.totalViews > 0 || data.ytOverview.subscribers > 0);
+
+  if (!hasRealData) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        </div>
+        <div className="max-w-md">
+          <h2 className="text-xl font-bold font-display">Synchronizing your channel...</h2>
+          <p className="text-muted-foreground mt-2">
+            Detailed analytics are currently being calculated. 
+            Please run the Spark ETL pipeline to populate your demographics and engagement trends.
+          </p>
+        </div>
+        <Button onClick={() => window.location.reload()} variant="outline" className="mt-4 gap-2">
+          <TrendingUp className="w-4 h-4" /> Refresh Status
+        </Button>
+      </div>
+    );
+  }
+
+  const ana = data;
+  const insta = data;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
@@ -99,7 +122,7 @@ export default function InfluencerAnalytics() {
               <CardHeader><CardTitle className="text-sm">Monthly View Trend</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={ana.ytMonthlyViews || dummy.ytAnalytics.monthlyViews}>
+                  <AreaChart data={ana.ytMonthlyViews || []}>
                     <defs>
                       <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(12, 80%, 62%)" stopOpacity={0.3}/>
@@ -123,15 +146,15 @@ export default function InfluencerAnalytics() {
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="50" stroke="hsl(220,13%,90%)" strokeWidth="12" fill="none" />
                     <circle cx="60" cy="60" r="50" stroke="hsl(12, 80%, 62%)" strokeWidth="12" fill="none"
-                      strokeDasharray={`${68 * 3.14} ${100 * 3.14}`} strokeLinecap="round" />
+                      strokeDasharray={`${(ana.healthScore || 68) * 3.14} ${100 * 3.14}`} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold">68%</span>
+                    <span className="text-2xl font-bold">{ana.healthScore || 0}%</span>
                     <span className="text-[10px] text-muted-foreground">Avg Retention</span>
                   </div>
                 </div>
                 <div className="mt-6 text-xs text-muted-foreground text-center">
-                  +4.2% higher than industry average
+                  Score based on real engagement KPIs
                 </div>
               </CardContent>
             </Card>
@@ -152,7 +175,7 @@ export default function InfluencerAnalytics() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
-                    {(ana.ytRecentVideos || dummy.ytAnalytics.recentVideos).map((v: any) => (
+                    {(ana.ytRecentVideos || []).map((v: any) => (
                       <tr key={v.title} className="hover:bg-muted/30 transition-colors">
                         <td className="py-3 pr-4 font-medium truncate max-w-[300px]">{v.title}</td>
                         <td className="py-3">{(v.views/1000).toFixed(0)}K</td>
@@ -161,6 +184,9 @@ export default function InfluencerAnalytics() {
                         <td className="py-3 font-medium">{v.retention}%</td>
                       </tr>
                     ))}
+                    {(!ana.ytRecentVideos || ana.ytRecentVideos.length === 0) && (
+                      <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No video data available</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -178,7 +204,7 @@ export default function InfluencerAnalytics() {
             ].map((kpi) => (
               <Card key={kpi.label}>
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{kpi.value}</p>
+                  <p className="text-2xl font-bold">{kpi.value || "0"}</p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                 </CardContent>
               </Card>
@@ -190,7 +216,7 @@ export default function InfluencerAnalytics() {
               <CardHeader><CardTitle className="text-sm">Engagement by Post Type</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={insta.instaEngagementByType || dummy.instaAnalytics.engagementByType}>
+                  <BarChart data={insta.instaEngagementByType || []}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="type" />
                     <YAxis tickFormatter={(v) => `${v}%`} />
@@ -205,7 +231,7 @@ export default function InfluencerAnalytics() {
               <CardHeader><CardTitle className="text-sm">Weekly Reach Trend</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={insta.instaWeeklyReach || dummy.instaAnalytics.weeklyReach}>
+                  <LineChart data={insta.instaWeeklyReach || []}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="week" />
                     <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
@@ -225,8 +251,8 @@ export default function InfluencerAnalytics() {
               <CardContent className="h-[300px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={ana.ytDemographics || dummy.ytAnalytics.demographics} dataKey="percent" nameKey="age" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5}>
-                      {(ana.ytDemographics || dummy.ytAnalytics.demographics).map((_: any, i: number) => (
+                    <Pie data={ana.ytDemographics || []} dataKey="percent" nameKey="age" cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5}>
+                      {(ana.ytDemographics || []).map((_: any, i: number) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
@@ -239,7 +265,7 @@ export default function InfluencerAnalytics() {
             <Card>
               <CardHeader><CardTitle className="text-sm">Top Geographies</CardTitle></CardHeader>
               <CardContent className="space-y-5 pt-4">
-                {(ana.ytTopCountries || dummy.ytAnalytics.topCountries)?.map((c: any) => (
+                {(ana.ytTopCountries || [])?.map((c: any) => (
                   <div key={c.country}>
                     <div className="flex justify-between text-sm mb-1.5 font-medium">
                       <span>{c.country}</span>
@@ -248,6 +274,9 @@ export default function InfluencerAnalytics() {
                     <Progress value={c.percent} className="h-2" />
                   </div>
                 ))}
+                {(!ana.ytTopCountries || ana.ytTopCountries.length === 0) && (
+                  <p className="text-center text-muted-foreground py-8">No geography data yet</p>
+                )}
               </CardContent>
             </Card>
           </div>

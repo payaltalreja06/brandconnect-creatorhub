@@ -10,6 +10,7 @@ const collabRequestSchema = new mongoose.Schema({
   campaignName: { type: String, required: true },
   message: { type: String, default: '' },
   budget: { type: String, default: '' },
+  categories: [{ type: String }],
   status: { type: String, enum: ['pending', 'accepted', 'declined'], default: 'pending' },
   threadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Thread', default: null },
   createdAt: { type: Date, default: Date.now },

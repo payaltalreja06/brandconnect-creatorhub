@@ -111,3 +111,42 @@ jspm_packages/
 *.tsbuildinfo
 bun.lock
 bun.lockb
+
+# ----------------------
+
+# Python / Spark / Airflow
+
+# ----------------------
+
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.python-version
+
+# Airflow
+airflow-logs/
+airflow.cfg
+airflow.db
+
+# ----------------------
+
+# Data / Temporary files
+
+# ----------------------
+
+data/
+tmp/
+*.parquet
+*.csv
+# *.json (ignoring all json except configs)
+# !*.json (keeping them for now if user has json config files)
+!package.json
+!package-lock.json
+!tsconfig.json
+!components.json
+!*.config.json
+!composer.json

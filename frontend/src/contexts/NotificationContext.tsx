@@ -25,6 +25,7 @@ interface CollabRequest {
   toUserId: string;
   campaignName: string;
   message: string;
+  categories?: string[];
   status: "pending" | "accepted" | "declined";
   threadId: string | null;
   createdAt: string;

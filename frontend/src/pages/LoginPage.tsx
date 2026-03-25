@@ -19,7 +19,7 @@ export default function LoginPage() {
       if (!authUser.setupComplete) {
         navigate("/complete-profile");
       } else {
-        const dest = authUser.role === "influencer" ? "/influencer/dashboard" : "/brand/dashboard";
+        const dest = authUser.role === "influencer" ? "/influencer/brands" : "/brand/dashboard";
         navigate(dest);
       }
     }

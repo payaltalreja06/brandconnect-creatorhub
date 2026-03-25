@@ -249,10 +249,10 @@ export default function ChatInterface() {
       setMessages(prev => prev.map(m => m._id === data.messageId ? { ...m, status: data.status as Message["status"] } : m));
     });
 
-    socket.on("all_seen", () => {
+    socket.on("all_seen", (data: { seenBy: string }) => {
       setMessages(prev => prev.map(m => ({
         ...m,
-        status: m.senderId === user.id ? "seen" : m.status,
+        status: m.senderId !== data.seenBy ? "seen" : m.status,
       } as Message)));
     });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Users, Eye, Video, TrendingUp, IndianRupee, Target, ArrowUpRight, ArrowDownRight, Loader2,
+  Users, Eye, Video, TrendingUp, Target, ArrowUpRight, ArrowDownRight, Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { analyticsApi, campaignApi } from "@/lib/api";
-import * as dummy from "@/data/dummy";
 
 const COLORS = ["hsl(12, 80%, 62%)", "hsl(222, 62%, 18%)", "hsl(173, 58%, 39%)", "hsl(43, 96%, 56%)", "hsl(262, 52%, 55%)"];
 
@@ -37,41 +36,15 @@ export default function InfluencerDashboard() {
         setAnalytics(anaRes.data);
         setCampaigns(camRes.data);
       } catch {
-        // Fallback to dummy
+        // No fallback to dummy!
         setAnalytics(null);
-        setCampaigns(dummy.campaigns);
+        setCampaigns([]);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
-
-  const data = analytics || {
-    ytOverview: { totalViews: 12500000, subscribers: 2400000 },
-    ytMonthlyViews: dummy.ytAnalytics.monthlyViews,
-    ytDemographics: dummy.ytAnalytics.demographics,
-    ytGenderSplit: dummy.ytAnalytics.genderSplit,
-    instaOverview: { followers: 600000 },
-    instaEngagementByType: dummy.instaAnalytics.engagementByType,
-    totalEarnings: "₹8.45L",
-    monthlyEarnings: dummy.revenueData.monthlyEarnings,
-    platformComparison: dummy.platformComparison,
-    postingBestTimes: dummy.postingData.bestPostingTimes,
-    postingBestDays: dummy.postingData.bestDays,
-    healthScore: 87,
-  };
-
-  const kpiCards = [
-    { label: "Total Followers", value: data.ytOverview.subscribers >= 1000000 ? (data.ytOverview.subscribers / 1000000).toFixed(1) + "M" : (data.ytOverview.subscribers / 1000).toFixed(0) + "K", change: "+12.5%", up: true, icon: Users },
-    { label: "Total Views", value: data.ytOverview.totalViews >= 1000000 ? (data.ytOverview.totalViews / 1000000).toFixed(1) + "M" : (data.ytOverview.totalViews / 1000).toFixed(0) + "K", change: "+8.3%", up: true, icon: Eye },
-    { label: "Avg Engagement", value: "4.8%", change: "+0.6%", up: true, icon: TrendingUp },
-    { label: "Total Revenue", value: data.totalEarnings, change: "+22%", up: true, icon: IndianRupee },
-    { label: "Campaigns Done", value: campaigns.filter(c => c.status === "completed").length || "8", change: "+2", up: true, icon: Target },
-    { label: "Health Score", value: `${data.healthScore}/100`, change: "+3", up: true, icon: Video },
-  ];
-
-  const activeCampaigns = campaigns.filter(c => c.status === "in_progress" || c.status === "accepted" || c.status === "pending");
 
   if (loading) {
     return (
@@ -80,6 +53,41 @@ export default function InfluencerDashboard() {
       </div>
     );
   }
+
+  // CRITICAL: Force Syncing message if REAL data is missing
+  const hasRealData = analytics && analytics.ytOverview && (analytics.ytOverview.totalViews > 0 || (analytics.ytOverview.subscribers > 0));
+
+  if (!hasRealData) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] space-y-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+        </div>
+        <div className="max-w-md">
+          <h2 className="text-xl font-bold font-display">Synchronizing your channel...</h2>
+          <p className="text-muted-foreground mt-2">
+            Welcome! We are currently fetching your latest statistics from YouTube and calculating your performance metrics. 
+            This usually takes 1-2 minutes for new accounts.
+          </p>
+        </div>
+        <Button onClick={() => window.location.reload()} variant="outline" className="mt-4 gap-2">
+          <TrendingUp className="w-4 h-4" /> Refresh Status
+        </Button>
+      </div>
+    );
+  }
+
+  const data = analytics;
+  const activeCampaigns = campaigns.filter(c => ["in_progress", "accepted", "pending"].includes(c.status));
+
+  const kpiCards = [
+    { label: "Total Followers", value: data.ytOverview?.subscribers >= 1000000 ? (data.ytOverview.subscribers / 1000000).toFixed(1) + "M" : (data.ytOverview?.subscribers / 1000).toFixed(0) + "K", change: "+12.5%", up: true, icon: Users },
+    { label: "Total Views", value: data.ytOverview?.totalViews >= 1000000 ? (data.ytOverview.totalViews / 1000000).toFixed(1) + "M" : (data.ytOverview?.totalViews / 1000).toFixed(0) + "K", change: "+8.3%", up: true, icon: Eye },
+    { label: "Avg Engagement", value: `${data.healthScore > 50 ? "4.8%" : "0.0%"}`, change: "+0.6%", up: true, icon: TrendingUp },
+    { label: "Total Videos", value: data.ytOverview?.totalVideos || "0", change: "+5", up: true, icon: Video },
+    { label: "Campaigns Done", value: campaigns.filter(c => c.status === "completed").length || "0", change: "+0", up: true, icon: Target },
+    { label: "Health Score", value: `${data.healthScore || 0}/100`, change: "+0", up: true, icon: Target },
+  ];
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
@@ -122,7 +130,7 @@ export default function InfluencerDashboard() {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Audience Growth</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={data.ytMonthlyViews}>
+              <LineChart data={data.ytMonthlyViews || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v/1000000).toFixed(1)}M`} />
@@ -137,7 +145,7 @@ export default function InfluencerDashboard() {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Revenue Trend</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.monthlyEarnings}>
+              <BarChart data={data.monthlyEarnings || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}K`} />
@@ -155,8 +163,8 @@ export default function InfluencerDashboard() {
           <CardContent className="flex items-center justify-center">
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
-                <Pie data={data.ytDemographics} dataKey="percent" nameKey="age" cx="50%" cy="50%" outerRadius={70} label={({ age, percent }) => `${age}: ${percent}%`}>
-                  {data.ytDemographics.map((_: any, i: number) => (
+                <Pie data={data.ytDemographics || []} dataKey="percent" nameKey="age" cx="50%" cy="50%" outerRadius={70} label={({ age, percent }) => `${age}: ${percent}%`}>
+                  {(data.ytDemographics || []).map((_: any, i: number) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
                 </Pie>
@@ -170,7 +178,7 @@ export default function InfluencerDashboard() {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Gender Distribution</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-4 pt-4">
-              {data.ytGenderSplit?.map((g: any) => (
+              {(data.ytGenderSplit || []).map((g: any) => (
                 <div key={g.gender}>
                   <div className="flex justify-between text-sm mb-1">
                     <span>{g.gender}</span>
@@ -179,6 +187,7 @@ export default function InfluencerDashboard() {
                   <Progress value={g.percent} className="h-2" />
                 </div>
               ))}
+              {(!data.ytGenderSplit || data.ytGenderSplit.length === 0) && <p className="text-xs text-muted-foreground text-center py-8">No data yet</p>}
             </div>
           </CardContent>
         </Card>
@@ -187,7 +196,7 @@ export default function InfluencerDashboard() {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Engagement by Content</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data.instaEngagementByType} layout="vertical">
+              <BarChart data={data.instaEngagementByType || []} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis dataKey="type" type="category" tick={{ fontSize: 12 }} width={70} />
@@ -214,7 +223,7 @@ export default function InfluencerDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.platformComparison?.map((p: any) => (
+                  {(data.platformComparison || []).map((p: any) => (
                     <tr key={p.platform} className="border-b border-border/50">
                       <td className="py-2.5 font-medium">{p.platform}</td>
                       <td className="py-2.5 text-right">{p.followers >= 1000000 ? (p.followers / 1000000).toFixed(1) + "M" : (p.followers / 1000).toFixed(0) + "K"}</td>
@@ -222,6 +231,9 @@ export default function InfluencerDashboard() {
                       <td className="py-2.5 text-right text-emerald-600">+{p.growth}%</td>
                     </tr>
                   ))}
+                  {(!data.platformComparison || data.platformComparison.length === 0) && (
+                    <tr><td colSpan={4} className="py-8 text-center text-muted-foreground italic">No platform data synced yet</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -261,7 +273,7 @@ export default function InfluencerDashboard() {
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={data.postingBestTimes}>
+              <BarChart data={data.postingBestTimes || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
@@ -270,7 +282,7 @@ export default function InfluencerDashboard() {
               </BarChart>
             </ResponsiveContainer>
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={data.postingBestDays}>
+              <BarChart data={data.postingBestDays || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
@@ -293,7 +305,7 @@ export default function InfluencerDashboard() {
                   strokeDasharray={`${(data.healthScore || 0) * 3.14} ${100 * 3.14}`} strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center font-bold text-3xl">
-                {data.healthScore}
+                {data.healthScore || 0}
               </div>
             </div>
             <div className="space-y-2 text-sm flex-1">

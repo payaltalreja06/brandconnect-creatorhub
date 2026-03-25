@@ -46,7 +46,7 @@ export default function SignupPage() {
         if (!u.setupComplete) {
             navigate("/complete-profile");
         } else {
-            navigate(selectedRole === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+            navigate(selectedRole === "influencer" ? "/influencer/brands" : "/brand/dashboard");
         }
       }
     } catch (err: unknown) {

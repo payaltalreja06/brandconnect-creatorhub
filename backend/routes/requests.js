@@ -28,12 +28,17 @@ router.post('/', auth, async (req, res) => {
     // Get sender profile name
     let fromName = req.user.name;
     let fromAvatar = req.user.avatar || '';
+    let fromCategories = [];
     if (req.user.role === 'brand') {
       const bp = await BrandProfile.findOne({ userId: req.user._id });
       if (bp) { fromName = bp.name; fromAvatar = bp.logo || fromAvatar; }
     } else {
       const ip = await InfluencerProfile.findOne({ userId: req.user._id });
-      if (ip) { fromName = ip.name; fromAvatar = ip.avatar || fromAvatar; }
+      if (ip) { 
+        fromName = ip.name; 
+        fromAvatar = ip.avatar || fromAvatar; 
+        fromCategories = ip.categories || [];
+      }
     }
 
     const request = new CollabRequest({
@@ -46,6 +51,7 @@ router.post('/', auth, async (req, res) => {
       campaignName,
       message: message || '',
       budget: budget || '',
+      categories: fromCategories,
       status: 'pending',
     });
     await request.save();

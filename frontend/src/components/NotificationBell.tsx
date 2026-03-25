@@ -152,8 +152,15 @@ export default function NotificationBell() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0 pt-0.5">
-                            <p className="font-bold text-sm text-foreground">{req.fromName}</p>
-                            <p className="text-xs text-muted-foreground/80 leading-relaxed mt-0.5">
+                            <p className="font-bold text-sm text-foreground bg-primary/10 px-1 inline-block rounded mb-1">{req.fromName}</p>
+                            <div className="flex flex-wrap gap-1 mb-2">
+                                {(req.categories || []).map((cat: string) => (
+                                    <span key={cat} className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-sm border border-orange-200">
+                                        {cat}
+                                    </span>
+                                ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground/80 leading-relaxed">
                               Campaign: <span className="font-semibold text-orange-600 dark:text-orange-400">{req.campaignName}</span>
                             </p>
                             {req.message && (

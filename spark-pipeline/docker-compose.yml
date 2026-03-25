@@ -1,0 +1,32 @@
+version: "3"
+services:
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    container_name: airflow-webserver
+    restart: always
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Sequential
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      - AIRFLOW_UID=50000
+      - YT_API_KEY=${YT_API_KEY}
+      - MONGO_URI=${MONGO_URI}
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./jobs:/opt/airflow/jobs
+      - ./data/yt:/opt/airflow/data/yt
+      - ./airflow-logs:/opt/airflow/logs
+    ports:
+      - "8181:8080"
+    command: >
+      bash -c "airflow db init &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+      airflow scheduler & airflow webserver"
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /opt/airflow/airflow.db ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
