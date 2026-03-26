@@ -1,32 +1,4 @@
-"""
-================================================================================
-BrandConnect CreatorHub — YouTube Channel Data Fetcher
-================================================================================
-Usage:
-  python fetch_channel.py --channel "MrBeast"
-  python fetch_channel.py --channel "@MrBeast"
-  python fetch_channel.py --channel "UCX6OQ3DkcsbYNE6H8uQQuVA"
-  python fetch_channel.py --channel "MrBeast" --channel "Kurzgesagt" --channel "Nisha Madhulika"
 
-What it does:
-  1. Searches YouTube Data API for the channel by name/handle/ID
-  2. Fetches channel stats (subscribers, totalViews, totalVideos)
-  3. Fetches up to --max-videos recent videos with their stats
-  4. Writes  data/yt/raw/{channelName}/data.json
-     (ready for spark-pipeline/jobs/etl.py to consume)
-
-Setup:
-  Set your YouTube Data API key as an env variable:
-    Windows:  $env:YT_API_KEY = "AIza..."
-    Linux:    export YT_API_KEY="AIza..."
-
-  Or pass it directly:
-    python fetch_channel.py --channel "MrBeast" --api-key "AIza..."
-
-Get a free API key:
-  https://console.cloud.google.com → Enable "YouTube Data API v3" → Credentials
-================================================================================
-"""
 
 import argparse
 import json
@@ -237,8 +209,8 @@ def fetch_and_write(query: str, api_key: str, max_videos: int) -> Path:
 
 def discover_influencers(mongo_uri: str) -> list[str]:
     """
-    Connect to MongoDB and find all influencers whose email doesn't
-    end in @collabrix.com. Returns a list of YouTube channel IDs/handles.
+    Connect to MongoDB and find all influencers.
+    Returns a list of YouTube channel IDs/handles.
     """
     try:
         from pymongo import MongoClient
@@ -250,16 +222,14 @@ def discover_influencers(mongo_uri: str) -> list[str]:
     client = MongoClient(mongo_uri)
     db     = client["brandconnect"]
 
-    # 1. Get all users whose email is NOT @collabrix.com
-    # Use regex for filtering
-    filter_regex = r".*@collabrix\.com$"
+    # Get all influencers with @gmail.com emails
     users = list(db.users.find({
-        "email": {"$not": {"$regex": filter_regex}},
-        "role": "influencer"
+        "role": "influencer",
+        "email": {"$regex": "@gmail\\.com$"}
     }, {"_id": 1}))
 
     user_ids = [u["_id"] for u in users]
-    log.info(f"Found {len(user_ids)} real influencers (excluding @collabrix.com).")
+    log.info(f"Found {len(user_ids)} influencers in database.")
 
     # 2. Find YouTube channels for these users
     profiles = db.influencerprofiles.find({

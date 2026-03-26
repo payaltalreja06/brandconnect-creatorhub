@@ -45,7 +45,7 @@ def fetch_youtube_data():
         },
         {
             "$match": {
-                "user.email": {"$not": {"$regex": "@collabrix\.com"}},
+                "user.email": {"$regex": "@gmail\.com$"},
                 "youtube": {"$ne": ""}
             }
         }

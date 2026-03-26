@@ -40,13 +40,13 @@ export default function SignupPage() {
       await register(name, email, password, selectedRole);
       toast.success("Account created! Welcome to Collabrix 🎉");
       
-      const savedUserString = localStorage.getItem("user");
+      const savedUserString = sessionStorage.getItem("user");
       if (savedUserString) {
         const u = JSON.parse(savedUserString);
         if (!u.setupComplete) {
             navigate("/complete-profile");
         } else {
-            navigate(selectedRole === "influencer" ? "/influencer/brands" : "/brand/dashboard");
+            navigate(selectedRole === "influencer" ? "/influencer/brands" : "/brand/discover");
         }
       }
     } catch (err: unknown) {

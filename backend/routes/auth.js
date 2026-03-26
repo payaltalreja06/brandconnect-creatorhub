@@ -56,8 +56,8 @@ router.post('/register', async (req, res) => {
 
       const analytics = new Analytics({
         userId: user._id,
-        ytOverview: { totalViews: 50000, subscribers: 1200, avgWatchTime: '4:30', totalVideos: 8 },
-        ytMonthlyViews: months.map(m => ({ month: m, views: Math.floor(Math.random() * 5000 + 1000) })),
+        ytOverview: { totalViews: 0, subscribers: 0, avgWatchTime: '0:00', totalVideos: 0 },
+        ytMonthlyViews: [],
         ytDemographics: [
             { age: "18-24", percent: 35 },
             { age: "25-34", percent: 45 },
@@ -143,13 +143,18 @@ router.post('/login', async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
+      console.log(`[auth] Login failed: User not found (${email})`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+    
+    console.log(`[auth] Found user: ${user.email}, role: ${user.role}`);
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log(`[auth] Login failed: Password mismatch for ${email}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+
 
     const token = generateToken(user._id.toString());
     res.json({

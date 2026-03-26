@@ -52,7 +52,8 @@ with DAG(
         """
         import os, glob
         raw_dir = "/opt/data/yt/raw/"
-        files   = glob.glob(os.path.join(raw_dir, "*", "data.json"), recursive=False)
+        # Uses recursive glob to find 'data.json' at any depth within folders
+        files   = glob.glob(os.path.join(raw_dir, "**", "data.json"), recursive=True)
         if not files:
             msg = f"No data.json files found in {raw_dir}{{channelName}}/data.json. Ensure channel data has been fetched."
             log.error(msg)

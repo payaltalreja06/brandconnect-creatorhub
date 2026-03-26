@@ -42,12 +42,13 @@ export default function CompleteProfilePage() {
       }
       
       // Update local storage/state for setupComplete
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const savedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
       savedUser.setupComplete = true;
-      localStorage.setItem("user", JSON.stringify(savedUser));
+      sessionStorage.setItem("user", JSON.stringify(savedUser));
       
       toast.success("Profile completed successfully!");
-      navigate(user?.role === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+      // Redirect to the "Browse" pages for each role
+      navigate(user?.role === "influencer" ? "/influencer/brands" : "/brand/discover");
     } catch {
       toast.error("Failed to complete profile");
     } finally {
