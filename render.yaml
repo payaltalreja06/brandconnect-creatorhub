@@ -30,14 +30,14 @@ services:
         sync: false
 
   # Frontend Service
-  - type: static
+  - type: web
     name: collabrix
     env: static
     plan: free
     region: ohio
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishDir: dist
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
         fromService:
