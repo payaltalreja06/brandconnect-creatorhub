@@ -19,9 +19,16 @@ const uploadRoutes = require('./routes/upload');
 const app = express();
 const server = http.createServer(app);
 
-const frontendUrl = process.env.FRONTEND_URL ? 
-  (process.env.FRONTEND_URL.startsWith('http') ? process.env.FRONTEND_URL.replace(/\/$/, '') : `https://${process.env.FRONTEND_URL.replace(/\/$/, '')}`) 
-  : null;
+let rawFrontend = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+if (rawFrontend && !rawFrontend.startsWith('http')) {
+  rawFrontend = `https://${rawFrontend}`;
+}
+if (rawFrontend && !rawFrontend.includes('.') && rawFrontend.includes('onrender')) {
+    // already has it partially? 
+} else if (rawFrontend && !rawFrontend.includes('.') && !rawFrontend.includes('localhost')) {
+  rawFrontend = `${rawFrontend}.onrender.com`;
+}
+const frontendUrl = rawFrontend || null;
 
 const allowedOrigins = [
   frontendUrl,
