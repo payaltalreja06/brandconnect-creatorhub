@@ -21,7 +21,7 @@ services:
         fromService:
           name: collabrix
           type: static
-          property: url
+          property: host
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -34,7 +34,6 @@ services:
     name: collabrix
     env: static
     plan: free
-    region: ohio
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -43,13 +42,13 @@ services:
         fromService:
           name: collabrix-api
           type: web
-          property: url
+          property: host
           suffix: /api
       - key: VITE_SOCKET_URL
         fromService:
           name: collabrix-api
           type: web
-          property: url
+          property: host
     routes:
       - type: rewrite
         source: /*
