@@ -47,6 +47,23 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Root Route & Security Headers
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; font-src 'self' data: https://collabrix-api.onrender.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+  );
+  next();
+});
+
+app.get('/', (req, res) => {
+  res.json({ 
+    message: '🚀 Collabrix API is Live!', 
+    frontend: process.env.FRONTEND_URL || 'Not Configured',
+    timestamp: new Date()
+  });
+});
+
 // Serve uploads as static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/spark-pipeline', express.static(path.join(__dirname, '../spark-pipeline')));
