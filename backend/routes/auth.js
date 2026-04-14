@@ -126,8 +126,22 @@ router.post('/register', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Register detailed error:', err);
-    res.status(500).json({ message: 'Server error during registration' });
+    console.error(' [AUTH] Registration Error Details:');
+    console.error(`  - Name: ${req.body?.name}`);
+    console.error(`  - Email: ${req.body?.email}`);
+    console.error(`  - Stack: ${err.stack}`);
+    
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation Error: ' + err.message });
+    }
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'Email collision detected on database save.' });
+    }
+    
+    res.status(500).json({ 
+      message: 'Server error during registration',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+    });
   }
 });
 
@@ -169,8 +183,14 @@ router.post('/login', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error during login' });
+    console.error(' [AUTH] Login Error Details:');
+    console.error(`  - Email: ${req.body?.email}`);
+    console.error(`  - Stack: ${err.stack}`);
+    
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+    });
   }
 });
 

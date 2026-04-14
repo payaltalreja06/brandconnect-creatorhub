@@ -19,8 +19,13 @@ const uploadRoutes = require('./routes/upload');
 const app = express();
 const server = http.createServer(app);
 
+const frontendUrl = process.env.FRONTEND_URL ? 
+  (process.env.FRONTEND_URL.startsWith('http') ? process.env.FRONTEND_URL.replace(/\/$/, '') : `https://${process.env.FRONTEND_URL.replace(/\/$/, '')}`) 
+  : null;
+
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
+  frontendUrl,
+  'https://collabrix.onrender.com', // Explicitly allow the primary domain
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:8080',
@@ -30,6 +35,14 @@ const allowedOrigins = [
   'http://127.0.0.1:8080',
   'http://127.0.0.1:8081'
 ].filter(Boolean);
+
+// Startup Validation
+if (!process.env.MONGODB_URI) {
+  console.error('❌ FATAL: MONGODB_URI is not defined in environment variables.');
+}
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'sync_false') {
+  console.error('⚠️ WARNING: JWT_SECRET is missing or invalid. Authentication will fail.');
+}
 
 const io = new Server(server, {
   cors: {
