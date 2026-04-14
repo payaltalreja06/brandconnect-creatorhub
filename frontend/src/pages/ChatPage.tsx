@@ -5,33 +5,48 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { chatThreads, type ChatThread, type ChatMessage } from "@/data/dummy";
-import { cn } from "@/lib/utils";
+import { messageApi } from "@/lib/api";
+import { type ChatThread, type ChatMessage } from "@/types";
 
 export default function ChatPage() {
-  const [threads] = useState(chatThreads);
-  const [activeThread, setActiveThread] = useState<ChatThread>(threads[0]);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [activeThread, setActiveThread] = useState<ChatThread | null>(null);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [localMessages, setLocalMessages] = useState<Record<string, ChatMessage[]>>({});
-
-  const getMessages = (thread: ChatThread) => localMessages[thread.id] || thread.messages;
-
-  const sendMessage = () => {
-    if (!message.trim()) return;
-    const newMsg: ChatMessage = {
-      id: Date.now().toString(),
-      senderId: "u1",
-      senderName: "You",
-      senderAvatar: "",
-      text: message,
-      timestamp: "Just now",
-      isOwn: true,
+  useEffect(() => {
+    const fetchThreads = async () => {
+      setLoading(true);
+      try {
+        const res = await messageApi.getThreads();
+        setThreads(res.data || []);
+        if (res.data?.length > 0) setActiveThread(res.data[0]);
+      } catch (err) {
+        console.error("Failed to fetch threads:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    setLocalMessages((prev) => ({
-      ...prev,
-      [activeThread.id]: [...getMessages(activeThread), newMsg],
-    }));
+    fetchThreads();
+  }, []);
+
+  const getMessages = (thread: ChatThread) => localMessages[thread.id] || thread.messages || [];
+
+  const sendMessage = async () => {
+    if (!message.trim() || !activeThread) return;
+    const msgText = message;
     setMessage("");
+
+    try {
+      const res = await messageApi.sendMessage(activeThread.id, msgText);
+      const newMsg = res.data;
+      setLocalMessages((prev) => ({
+        ...prev,
+        [activeThread.id]: [...getMessages(activeThread), newMsg],
+      }));
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   return (
@@ -86,57 +101,74 @@ export default function ChatPage() {
 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="p-4 border-b border-border flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-lg">
-              {activeThread.avatar.startsWith("http") ? (
-                <img src={activeThread.avatar} alt={activeThread.name} className="w-9 h-9 rounded-full" />
-              ) : (
-                activeThread.avatar
-              )}
-            </div>
-            <div>
-              <p className="font-semibold text-sm">{activeThread.name}</p>
-              <p className="text-xs text-muted-foreground">Active now</p>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {getMessages(activeThread).map((msg) => (
-                <div key={msg.id} className={cn("flex", msg.isOwn ? "justify-end" : "justify-start")}>
-                  <div className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2.5",
-                    msg.isOwn
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-muted rounded-bl-md"
-                  )}>
-                    <p className="text-sm">{msg.text}</p>
-                    <p className={cn("text-xs mt-1", msg.isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
-                      {msg.timestamp}
-                    </p>
-                  </div>
+          {activeThread ? (
+            <>
+              {/* Header */}
+              <div className="p-4 border-b border-border flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-lg shrink-0">
+                  {activeThread.avatar?.startsWith("http") ? (
+                    <img src={activeThread.avatar} alt={activeThread.name} className="w-9 h-9 rounded-full object-cover" />
+                  ) : (
+                    <span className="text-xl">{activeThread.avatar || "👤"}</span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+                <div>
+                  <p className="font-semibold text-sm">{activeThread.name}</p>
+                  <p className="text-xs text-muted-foreground">Active now</p>
+                </div>
+              </div>
 
-          {/* Input */}
-          <div className="p-4 border-t border-border">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Type a message..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                className="flex-1"
-              />
-              <Button onClick={sendMessage} size="icon" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Send className="w-4 h-4" />
-              </Button>
+              {/* Messages */}
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {getMessages(activeThread).map((msg) => (
+                    <div key={msg.id} className={cn("flex", msg.isOwn ? "justify-end" : "justify-start")}>
+                      <div className={cn(
+                        "max-w-[75%] rounded-2xl px-4 py-2.5",
+                        msg.isOwn
+                          ? "bg-primary text-primary-foreground rounded-br-md"
+                          : "bg-muted rounded-bl-md"
+                      )}>
+                        <p className="text-sm">{msg.text}</p>
+                        <p className={cn("text-xs mt-1", msg.isOwn ? "text-primary-foreground/60" : "text-muted-foreground")}>
+                          {msg.timestamp}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {getMessages(activeThread).length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground italic text-sm">
+                      No messages yet. Say hello!
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              {/* Input */}
+              <div className="p-4 border-t border-border">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Type a message..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    className="flex-1"
+                  />
+                  <Button onClick={sendMessage} size="icon" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Send className="w-8 h-8 opacity-20" />
+              </div>
+              <h3 className="font-semibold text-foreground">Your Messages</h3>
+              <p className="text-sm max-w-xs mt-1">Select a conversation from the sidebar to start chatting.</p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

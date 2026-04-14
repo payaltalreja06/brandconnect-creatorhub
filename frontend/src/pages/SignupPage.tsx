@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap, Eye, EyeOff, Loader2, Mail, Lock, User, Building2, ChevronRight } from "lucide-react";
+import { Zap, Eye, EyeOff, Loader2, Mail, Lock, User, Building2, ChevronRight, Youtube, Instagram } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -208,7 +208,22 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+                <div className="pt-2 space-y-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Social Media Sync</span></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button type="button" variant="outline" className="gap-2 border-red-100 hover:bg-red-50 hover:text-black text-red-600 h-11" onClick={() => toast.info("Authenticating with YouTube...")}>
+                      <Youtube className="w-4 h-4" /> Connect YT
+                    </Button>
+                    <Button type="button" variant="outline" className="gap-2 border-blue-100 hover:bg-blue-50 hover:text-black text-blue-600 h-11" onClick={() => toast.info("Authenticating with Meta...")}>
+                      <Instagram className="w-4 h-4" /> Connect Meta
+                    </Button>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full gap-2 h-11" disabled={isLoading}>
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>

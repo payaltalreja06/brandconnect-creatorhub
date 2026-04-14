@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { analyticsApi, campaignApi } from "@/lib/api";
-import * as dummy from "@/data/dummy";
+import { formatNumber, formatCurrency } from "@/lib/formatters";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -32,9 +32,7 @@ export default function BrandDashboard() {
         setAnalytics(anaRes.data);
         setCampaigns(camRes.data);
       } catch (err) {
-        // Fallback to dummy
-        setAnalytics(null);
-        setCampaigns(dummy.campaigns);
+        console.error("Failed to fetch dashboard data:", err);
       } finally {
         setLoading(false);
       }
@@ -43,16 +41,16 @@ export default function BrandDashboard() {
   }, []);
 
   const data = analytics?.brandOverview || {
-    totalCampaigns: 12,
-    activeCampaigns: 3,
-    successRate: 92,
-    totalSpending: "₹15.6L",
-    avgCampaignROI: 4.2,
+    totalCampaigns: 0,
+    activeCampaigns: 0,
+    successRate: 0,
+    totalSpending: "₹0",
+    avgCampaignROI: 0,
   };
 
-  const spendingTrend = analytics?.brandSpendingTrend || dummy.brandAnalytics.spendingTrend;
-  const performance = analytics?.brandCampaignPerformance || dummy.brandAnalytics.campaignPerformance;
-  const topInfluencers = analytics?.brandInfluencerComparison || dummy.brandAnalytics.influencerComparison;
+  const spendingTrend = analytics?.brandSpendingTrend || [];
+  const performance = analytics?.brandCampaignPerformance || [];
+  const topInfluencers = analytics?.brandInfluencerComparison || [];
 
   const kpiCards = [
     { label: "Total Campaigns", value: data.totalCampaigns.toString(), change: "+3", icon: Megaphone },
@@ -63,7 +61,7 @@ export default function BrandDashboard() {
     { label: "Influencers", value: topInfluencers.length.toString(), change: "+2", icon: Users },
   ];
 
-  const activeCampaigns = campaigns.filter(c => c.status === "in_progress" || c.status === "accepted" || c.status === "pending");
+  const activeCampaigns = campaigns.filter(c => ["in_progress", "accepted", "pending"].includes(c.status));
 
   if (loading) {
     return (
@@ -103,15 +101,19 @@ export default function BrandDashboard() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Spending Trend</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={230}>
-              <BarChart data={spendingTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}K`} />
-                <Tooltip formatter={(vValue: number) => [`₹${vValue.toLocaleString()}`, "Spending"]} />
-                <Bar dataKey="spending" fill="hsl(222,62%,18%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {spendingTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={spendingTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}K`} />
+                  <Tooltip formatter={(vValue: number) => [`₹${vValue.toLocaleString()}`, "Spending"]} />
+                  <Bar dataKey="spending" fill="hsl(222,62%,18%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[230px] flex items-center justify-center text-sm text-muted-foreground italic">No spending data yet</div>
+            )}
           </CardContent>
         </Card>
 
@@ -134,9 +136,12 @@ export default function BrandDashboard() {
                       <td className="py-2.5 font-medium">{c.campaign}</td>
                       <td className="py-2.5 text-right">{c.engagement}%</td>
                       <td className="py-2.5 text-right">{c.roi}x</td>
-                      <td className="py-2.5 text-right">{(c.reach/1000000).toFixed(1)}M</td>
+                      <td className="py-2.5 text-right">{formatNumber(c.reach)}</td>
                     </tr>
                   ))}
+                  {performance?.length === 0 && (
+                    <tr><td colSpan={4} className="py-8 text-center text-muted-foreground italic">No campaign data yet</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -149,7 +154,7 @@ export default function BrandDashboard() {
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Active Campaigns</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {activeCampaigns.map((c: any) => (
+              {activeCampaigns.slice(0, 5).map((c: any) => (
                 <div key={c._id || c.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   {c.brandLogo && c.brandLogo.startsWith('http') ? (
                     <img src={c.brandLogo} alt={c.brandName} className="w-10 h-10 rounded-lg object-cover bg-muted shrink-0" />
@@ -160,7 +165,7 @@ export default function BrandDashboard() {
                     <p className="font-medium text-sm truncate">{c.title}</p>
                     <p className="text-xs text-muted-foreground">{c.influencerName || "Unassigned"}</p>
                   </div>
-                  <Badge variant="default" className="text-xs capitalize">{c.status}</Badge>
+                  <Badge variant="default" className="text-xs capitalize h-5">{c.status}</Badge>
                 </div>
               ))}
               {activeCampaigns.length === 0 && (
@@ -187,6 +192,9 @@ export default function BrandDashboard() {
                   </div>
                 </div>
               ))}
+              {topInfluencers?.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No data yet</p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -76,10 +76,10 @@ const App = () => (
 
                 {/* Brand routes */}
                 <Route path="/brand/dashboard" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandDashboard /></BrandLayout></ProtectedRoute>} />
-                <Route path="/brand/discover" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandDiscover /></BrandLayout></ProtectedRoute>} />
-                <Route path="/brand/influencer/:id" element={<ProtectedRoute requiredRole="brand"><BrandLayout><InfluencerProfilePage /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/discover" element={<ProtectedRoute><BrandLayout><BrandDiscover /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/influencer/:id" element={<ProtectedRoute><BrandLayout><InfluencerProfilePage /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/campaigns" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandCampaigns /></BrandLayout></ProtectedRoute>} />
-                <Route path="/brand/messages" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandMessages /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/messages" element={<ProtectedRoute><BrandLayout><BrandMessages /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/analytics" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandAnalytics /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/payments" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandPayments /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/profile" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandProfile /></BrandLayout></ProtectedRoute>} />

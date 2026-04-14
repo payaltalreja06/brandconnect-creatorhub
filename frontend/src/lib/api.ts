@@ -49,6 +49,11 @@ export const influencerApi = {
   updateMe: (data: Record<string, unknown>) => api.put('/influencers/me', data),
   updateFaqs: (faqs: { question: string; answer: string }[]) =>
     api.put('/influencers/me/faqs', { faqs }),
+  uploadAvatar: (formData: FormData) =>
+    api.post('/upload/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  removeAvatar: () => api.delete('/upload/avatar'),
 };
 
 // ─── Brands ───

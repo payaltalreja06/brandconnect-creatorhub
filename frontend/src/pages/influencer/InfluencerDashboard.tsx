@@ -12,6 +12,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { analyticsApi, campaignApi } from "@/lib/api";
+import { formatNumber, formatCurrency } from "@/lib/formatters";
+import { type YTAnalytics, type Campaign } from "@/types";
 
 const COLORS = ["hsl(12, 80%, 62%)", "hsl(222, 62%, 18%)", "hsl(173, 58%, 39%)", "hsl(43, 96%, 56%)", "hsl(262, 52%, 55%)"];
 
@@ -81,11 +83,11 @@ export default function InfluencerDashboard() {
   const activeCampaigns = campaigns.filter(c => ["in_progress", "accepted", "pending"].includes(c.status));
 
   const kpiCards = [
-    { label: "Total Followers", value: data.ytOverview?.subscribers >= 1000000 ? (data.ytOverview.subscribers / 1000000).toFixed(1) + "M" : (data.ytOverview?.subscribers / 1000).toFixed(0) + "K", change: "+12.5%", up: true, icon: Users },
-    { label: "Total Views", value: data.ytOverview?.totalViews >= 1000000 ? (data.ytOverview.totalViews / 1000000).toFixed(1) + "M" : (data.ytOverview?.totalViews / 1000).toFixed(0) + "K", change: "+8.3%", up: true, icon: Eye },
+    { label: "Total Followers", value: formatNumber(data.ytOverview?.subscribers), change: "+12.5%", up: true, icon: Users },
+    { label: "Total Views", value: formatNumber(data.ytOverview?.totalViews), change: "+8.3%", up: true, icon: Eye },
     { label: "Avg Engagement", value: `${data.healthScore > 50 ? "4.8%" : "0.0%"}`, change: "+0.6%", up: true, icon: TrendingUp },
     { label: "Total Videos", value: data.ytOverview?.totalVideos || "0", change: "+5", up: true, icon: Video },
-    { label: "Campaigns Done", value: campaigns.filter(c => c.status === "completed").length || "0", change: "+0", up: true, icon: Target },
+    { label: "Campaigns Done", value: campaigns.filter((c: any) => c.status === "completed").length || "0", change: "+0", up: true, icon: Target },
     { label: "Health Score", value: `${data.healthScore || 0}/100`, change: "+0", up: true, icon: Target },
   ];
 
@@ -226,7 +228,7 @@ export default function InfluencerDashboard() {
                   {(data.platformComparison || []).map((p: any) => (
                     <tr key={p.platform} className="border-b border-border/50">
                       <td className="py-2.5 font-medium">{p.platform}</td>
-                      <td className="py-2.5 text-right">{p.followers >= 1000000 ? (p.followers / 1000000).toFixed(1) + "M" : (p.followers / 1000).toFixed(0) + "K"}</td>
+                      <td className="py-2.5 text-right">{formatNumber(p.followers)}</td>
                       <td className="py-2.5 text-right">{p.engagement}%</td>
                       <td className="py-2.5 text-right text-emerald-600">+{p.growth}%</td>
                     </tr>

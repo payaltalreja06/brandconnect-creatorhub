@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pymongo import MongoClient
 from bson import ObjectId
 import certifi
+import cloudinary
+import cloudinary.uploader
 from dotenv import load_dotenv
 
 # ── Configuration & Logging ───────────────────────────────────────────────────
@@ -20,6 +22,14 @@ BASE_DATA_DIR = "data/yt"
 RAW_PATH      = os.path.join(BASE_DATA_DIR, "raw")
 MONGO_URI     = os.environ.get("MONGO_URI", "")
 DATABASE      = "test"
+
+# ── Cloudinary Configuration ───────────────────────────────────────────────────
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 # ==============================================================================
 # Helper: Real KPI Calculations
@@ -45,6 +55,8 @@ def run_real_data_etl():
         client = MongoClient(MONGO_URI, tls=True, tlsAllowInvalidCertificates=True)
         db = client[DATABASE]
         analytics_col = db["analytics"]
+        influencer_col = db["influencerprofiles"]
+        users_col = db["users"]
     except Exception as e:
         log.error(f"Failed to connect: {e}")
         return
@@ -70,7 +82,30 @@ def run_real_data_etl():
             subs  = int(raw_data.get("subscribers", 0))
             views = int(raw_data.get("totalViews", 0))
             vids  = int(raw_data.get("totalVideos", 0))
+            raw_avatar_url = raw_data.get("avatar")
             raw_videos = raw_data.get("videos", [])
+
+            # ── [1.5] UPLOAD AVATAR TO CLOUDINARY ─────────────────────────────
+            final_avatar_url = None
+            if raw_avatar_url:
+                try:
+                    upload_res = cloudinary.uploader.upload(
+                        raw_avatar_url,
+                        folder="collabrix/avatar",
+                        public_id=user_id_str, # Use userId as publicId to ensure persistence/overwrite
+                        overwrite=True,
+                        resource_type="image"
+                    )
+                    final_avatar_url = upload_res.get("secure_url")
+                    log.info(f"📸 Avatar uploaded to Cloudinary for {channel}")
+                except Exception as upload_err:
+                    log.error(f"Failed to upload avatar for {channel}: {upload_err}")
+            
+            # Sync with InfluencerProfile and User collection
+            if final_avatar_url:
+                influencer_col.update_one({"userId": user_id}, {"$set": {"avatar": final_avatar_url}})
+                users_col.update_one({"_id": user_id}, {"$set": {"avatar": final_avatar_url}})
+                log.info(f"🔄 Sync'd avatar URL in MongoDB for {channel}")
 
             # ── [2] CALCULATE REAL KPIs ───────────────────────────────────────
             # a. Channel Engagement (Based on recent videos)

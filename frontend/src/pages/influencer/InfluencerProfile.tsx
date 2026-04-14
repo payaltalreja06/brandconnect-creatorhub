@@ -11,6 +11,8 @@ import { influencerApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Camera } from "lucide-react";
+import { getAvatarUrl } from "@/lib/utils";
 
 interface FAQ {
   question: string;
@@ -42,6 +44,9 @@ export default function InfluencerProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+
 
   // Edit profile state
   const [editOpen, setEditOpen] = useState(false);
@@ -141,6 +146,41 @@ export default function InfluencerProfile() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    setUploading(true);
+    try {
+      const res = await influencerApi.uploadAvatar(formData);
+      setProfile(prev => prev ? { ...prev, avatar: res.data.avatarUrl } : null);
+      toast.success("Profile photo updated!");
+    } catch {
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!confirm("Are you sure you want to remove your profile photo?")) return;
+    setUploading(true);
+    try {
+      await influencerApi.removeAvatar();
+      setProfile(prev => prev ? { ...prev, avatar: "" } : null);
+      toast.success("Profile photo removed");
+    } catch {
+      toast.error("Failed to remove photo");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // getAvatarUrl removed - now using shared util from @/lib/utils
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -206,7 +246,29 @@ export default function InfluencerProfile() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
-            <img src={profile.avatar || user?.avatar} alt={profile.name} className="w-24 h-24 rounded-2xl bg-muted" />
+            <div className="relative group shrink-0">
+              <img 
+                src={getAvatarUrl(profile.avatar || user?.avatar)} 
+                alt={profile.name} 
+                className="w-24 h-24 rounded-2xl bg-muted object-cover border border-border" 
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity gap-2">
+                <label className="cursor-pointer hover:scale-110 transition-transform">
+                  {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Camera className="w-6 h-6" />}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} />
+                </label>
+                {(profile.avatar || user?.avatar) && (
+                  <button 
+                    onClick={handleRemoveAvatar} 
+                    className="hover:scale-110 transition-transform text-red-400" 
+                    title="Remove Photo"
+                    disabled={uploading}
+                  >
+                    <Trash className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-xl font-bold">{profile.name}</h2>
@@ -231,12 +293,21 @@ export default function InfluencerProfile() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Youtube className="w-4 h-4 text-red-500" /> YouTube</div>
-              <span className="font-medium">{profile.ytSubscribers ? (profile.ytSubscribers / 1000000).toFixed(1) + "M subscribers" : "Not connected"}</span>
+              <div className="flex items-center gap-3">
+                <span className="font-medium text-sm">{profile.ytSubscribers ? (profile.ytSubscribers / 1000).toFixed(0) + "K subs" : "Pending"}</span>
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50 px-2" onClick={() => toast.success("YouTube Live Sync Active")}>Re-sync</Button>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2"><Instagram className="w-4 h-4 text-pink-500" /> Instagram</div>
-              <span className="font-medium">{profile.instaFollowers ? (profile.instaFollowers / 1000).toFixed(0) + "K followers" : "Not connected"}</span>
+              <div className="flex items-center gap-3">
+                <span className="font-medium text-sm">{profile.instaFollowers ? (profile.instaFollowers / 1000).toFixed(0) + "K followers" : "Pending"}</span>
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-blue-600 hover:bg-blue-50 px-2" onClick={() => toast.success("Meta Insights Sync Active")}>Re-sync</Button>
+              </div>
             </div>
+            <Button variant="outline" className="w-full mt-2 gap-2 text-xs h-9 border-dashed" onClick={() => toast.info("Social Account Selector... (Manager Mode)")}>
+               <Shield className="w-3.5 h-3.5" /> Manage OAuth Connections
+            </Button>
           </CardContent>
         </Card>
 

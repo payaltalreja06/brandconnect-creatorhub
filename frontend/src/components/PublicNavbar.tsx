@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Explore", path: "/influencers" },
@@ -13,6 +14,7 @@ const navLinks = [
 export default function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { isLoggedIn, userName, role } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -57,16 +59,29 @@ export default function PublicNavbar() {
 
         {/* Auth Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="ghost" size="sm">
-              Login
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button variant="outline" size="sm">
-              Sign Up
-            </Button>
-          </Link>
+          {isLoggedIn ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">
+                Hello, <span className="text-foreground">{userName}</span>
+              </span>
+              <Link to={role === "influencer" ? "/influencer/dashboard" : "/brand/dashboard"}>
+                <Button size="sm">Go to Dashboard</Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button variant="outline" size="sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Toggle */}
@@ -105,16 +120,26 @@ export default function PublicNavbar() {
                 </Link>
               ))}
               <hr className="my-2 border-gray-100" />
-              <Link to="/login" onClick={() => setMobileOpen(false)}>
-                <Button variant="ghost" size="sm" className="w-full justify-start">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/signup" onClick={() => setMobileOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  Sign Up
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link to={role === "influencer" ? "/influencer/dashboard" : "/brand/dashboard"} onClick={() => setMobileOpen(false)}>
+                  <Button size="sm" className="w-full">
+                    Go to Dashboard ({userName})
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.nav>
         )}

@@ -15,4 +15,5 @@ dnspython==2.6.1
 # mongo-spark-connector        # Spark-native MongoDB connector (via spark-submit --packages)
 
 # ── Future: Instagram / Facebook ETL (uncomment when modules are added) ────────
-# requests==2.31.0             # HTTP client for Meta Graph API calls
+requests==2.31.0             # HTTP client for Meta Graph API calls
+cloudinary==1.41.0           # Cloudinary Python SDK

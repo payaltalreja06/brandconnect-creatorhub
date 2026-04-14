@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { postingData, campaigns } from "@/data/dummy";
+const postingData: any[] = [];
+const campaigns: any[] = [];
 
 export default function InfluencerSchedule() {
   const [date, setDate] = useState<Date | undefined>(new Date());

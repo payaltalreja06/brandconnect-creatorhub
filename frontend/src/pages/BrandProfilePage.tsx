@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Globe, Send, Megaphone, Target, CheckCircle } from "lucide-react";
-import { brands } from "@/data/dummy";
+const brands: any[] = [];
 
 export default function BrandProfilePage() {
   const { id } = useParams();

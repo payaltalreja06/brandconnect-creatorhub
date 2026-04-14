@@ -3,8 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { campaigns } from "@/data/dummy";
-import { CheckCircle, Clock, Play, AlertCircle } from "lucide-react";
+import { campaignApi } from "@/lib/api";
+import { type Campaign } from "@/types";
+import { CheckCircle, Clock, Play, AlertCircle, Loader2 } from "lucide-react";
 
 const statusConfig = {
   pending: { label: "Pending", icon: Clock, variant: "secondary" as const },
@@ -14,7 +15,27 @@ const statusConfig = {
 };
 
 export default function InfluencerCampaigns() {
-  const myCampaigns = campaigns.filter(c => c.influencerId);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      setLoading(true);
+      try {
+        const res = await campaignApi.getAll();
+        setCampaigns(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch campaigns:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCampaigns();
+  }, []);
+
+  const myCampaigns = campaigns;
+
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin" /></div>;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">

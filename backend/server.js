@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
@@ -13,11 +14,13 @@ const messageRoutes = require('./routes/messages');
 const notificationRoutes = require('./routes/notifications');
 const campaignRoutes = require('./routes/campaigns');
 const analyticsRoutes = require('./routes/analytics');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
+  process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:8080',
@@ -26,7 +29,7 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'http://127.0.0.1:8080',
   'http://127.0.0.1:8081'
-];
+].filter(Boolean);
 
 const io = new Server(server, {
   cors: {
@@ -44,6 +47,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploads as static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/spark-pipeline', express.static(path.join(__dirname, '../spark-pipeline')));
+
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
@@ -56,6 +63,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Socket.IO — Real-time chat
 const onlineUsers = new Map(); // userId -> socketId

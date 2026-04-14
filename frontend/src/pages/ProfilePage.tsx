@@ -3,7 +3,7 @@ import { BadgeCheck, MapPin, Youtube, Instagram, Users, TrendingUp, Edit, Settin
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { influencers } from "@/data/dummy";
+const influencers: any[] = [];
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";

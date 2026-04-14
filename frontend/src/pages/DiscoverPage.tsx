@@ -1,27 +1,24 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Filter, ChevronDown, Users, TrendingUp, BadgeCheck, Youtube, Instagram } from "lucide-react";
+import { Search, Filter, ChevronDown, Users, TrendingUp, BadgeCheck, Youtube, Instagram, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { influencers, domains, type Influencer } from "@/data/dummy";
-
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(0) + "K";
-  return n.toString();
-}
+import { influencerApi } from "@/lib/api";
+import { type Influencer } from "@/types";
+import { formatNumber } from "@/lib/formatters";
 
 function InfluencerCard({ inf }: { inf: Influencer }) {
+  const id = inf._id || inf.id;
   return (
-    <Link to={`/influencer/${inf.id}`}>
+    <Link to={`/influencer/${id}`}>
       <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
         <CardContent className="p-5">
           <div className="flex items-start gap-4">
-            <img src={inf.avatar} alt={inf.name} className="w-14 h-14 rounded-full bg-muted" />
+            <img src={inf.avatar} alt={inf.name} className="w-14 h-14 rounded-full bg-muted object-cover" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold truncate">{inf.name}</h3>
@@ -29,7 +26,7 @@ function InfluencerCard({ inf }: { inf: Influencer }) {
               </div>
               <p className="text-sm text-muted-foreground truncate">{inf.handle}</p>
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {inf.domain.map((d) => (
+                {inf.domain && inf.domain.map((d) => (
                   <Badge key={d} variant="secondary" className="text-xs font-normal">{d}</Badge>
                 ))}
               </div>
@@ -48,14 +45,14 @@ function InfluencerCard({ inf }: { inf: Influencer }) {
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
-              <p className="font-semibold text-sm">{inf.engagement}%</p>
+              <p className="font-semibold text-sm">{inf.engagement || 0}%</p>
               <p className="text-xs text-muted-foreground">Engagement</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                {inf.platforms.includes("YouTube") ? <Youtube className="w-3.5 h-3.5" /> : <Instagram className="w-3.5 h-3.5" />}
+                {inf.platforms?.includes("YouTube") ? <Youtube className="w-3.5 h-3.5" /> : <Instagram className="w-3.5 h-3.5" />}
               </div>
-              <p className="font-semibold text-sm">{inf.platforms.length}</p>
+              <p className="font-semibold text-sm">{inf.platforms?.length || 0}</p>
               <p className="text-xs text-muted-foreground">Platforms</p>
             </div>
           </div>
@@ -70,9 +67,32 @@ function InfluencerCard({ inf }: { inf: Influencer }) {
 }
 
 export default function DiscoverPage() {
+  const [influencers, setInfluencers] = useState<Influencer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("followers");
+
+  useEffect(() => {
+    const fetchInfluencers = async () => {
+      setLoading(true);
+      try {
+        const res = await influencerApi.getAll();
+        setInfluencers(res.data);
+      } catch (err) {
+        console.error("Failed to fetch influencers:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInfluencers();
+  }, []);
+
+  const domains = useMemo(() => {
+    const d = new Set<string>();
+    influencers.forEach(i => i.domain?.forEach(dom => d.add(dom)));
+    return Array.from(d).sort();
+  }, [influencers]);
 
   const filtered = useMemo(() => {
     let result = [...influencers];
@@ -81,12 +101,20 @@ export default function DiscoverPage() {
       result = result.filter((i) => i.name.toLowerCase().includes(q) || i.handle.toLowerCase().includes(q));
     }
     if (selectedDomain !== "all") {
-      result = result.filter((i) => i.domain.includes(selectedDomain));
+      result = result.filter((i) => i.domain?.includes(selectedDomain));
     }
-    if (sortBy === "followers") result.sort((a, b) => b.followers - a.followers);
-    else if (sortBy === "engagement") result.sort((a, b) => b.engagement - a.engagement);
+    if (sortBy === "followers") result.sort((a, b) => (b.followers || 0) - (a.followers || 0));
+    else if (sortBy === "engagement") result.sort((a, b) => (b.engagement || 0) - (a.engagement || 0));
     return result;
-  }, [search, selectedDomain, sortBy]);
+  }, [influencers, search, selectedDomain, sortBy]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -139,7 +167,7 @@ export default function DiscoverPage() {
         >
           All
         </Badge>
-        {domains.slice(0, 8).map((d) => (
+        {domains.slice(0, 10).map((d) => (
           <Badge
             key={d}
             variant={selectedDomain === d ? "default" : "secondary"}
@@ -156,7 +184,7 @@ export default function DiscoverPage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {filtered.map((inf, i) => (
           <motion.div
-            key={inf.id}
+            key={inf._id || inf.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
@@ -174,3 +202,4 @@ export default function DiscoverPage() {
     </div>
   );
 }
+

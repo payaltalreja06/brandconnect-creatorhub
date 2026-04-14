@@ -1,11 +1,37 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { brandAnalytics } from "@/data/dummy";
+import { influencerApi } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 export default function BrandAnalytics() {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({
+    totalReach: 0,
+    engagement: 0,
+    conversionRate: 0,
+    activeCampaigns: 0,
+    reachHistory: [],
+    campaignPerformance: [],
+    spendingTrend: [],
+    influencerComparison: []
+  });
+
+  useEffect(() => {
+    // In a real app, we'd have a specific brand analytics endpoint
+    // For now, we'll simulate loading to keep the UI stable
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+
+  const brandAnalytics = data;
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       <div>

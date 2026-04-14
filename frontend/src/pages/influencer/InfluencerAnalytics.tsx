@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { analyticsApi } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { formatNumber } from "@/lib/formatters";
 
 const COLORS = ["hsl(12, 80%, 62%)", "hsl(222, 62%, 18%)", "hsl(173, 58%, 39%)", "hsl(43, 96%, 56%)", "hsl(262, 52%, 55%)"];
 
@@ -102,8 +103,8 @@ export default function InfluencerAnalytics() {
           {/* YT KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Subscribers", value: (ana.ytOverview?.subscribers / 1000).toFixed(0) + "K", icon: Users },
-              { label: "Total Views", value: (ana.ytOverview?.totalViews / 1000000).toFixed(1) + "M", icon: Eye },
+              { label: "Subscribers", value: formatNumber(ana.ytOverview?.subscribers), icon: Users },
+              { label: "Total Views", value: formatNumber(ana.ytOverview?.totalViews, 1, "auto"), icon: Eye },
               { label: "Avg Watch Time", value: ana.ytOverview?.avgWatchTime || "4:30", icon: Clock },
               { label: "Total Videos", value: ana.ytOverview?.totalVideos?.toString() || "245", icon: Play },
             ].map((kpi) => (
@@ -131,7 +132,7 @@ export default function InfluencerAnalytics() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="month" />
-                    <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                    <YAxis tickFormatter={(v) => formatNumber(v, 1, "auto")} />
                     <Tooltip />
                     <Area type="monotone" dataKey="views" stroke="hsl(12, 80%, 62%)" fillOpacity={1} fill="url(#colorViews)" strokeWidth={2} />
                   </AreaChart>
@@ -178,7 +179,7 @@ export default function InfluencerAnalytics() {
                     {(ana.ytRecentVideos || []).map((v: any) => (
                       <tr key={v.title} className="hover:bg-muted/30 transition-colors">
                         <td className="py-3 pr-4 font-medium truncate max-w-[300px]">{v.title}</td>
-                        <td className="py-3">{(v.views/1000).toFixed(0)}K</td>
+                        <td className="py-3">{formatNumber(v.views, 1, "auto")}</td>
                         <td className="py-3 text-emerald-600">{v.ctr}%</td>
                         <td className="py-3">{v.avgViewDuration}</td>
                         <td className="py-3 font-medium">{v.retention}%</td>
@@ -197,10 +198,10 @@ export default function InfluencerAnalytics() {
         <TabsContent value="instagram" className="space-y-6 outline-none">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Followers", value: (insta.instaOverview?.followers / 1000).toFixed(0) + "K", icon: Users },
-              { label: "Profile Reach", value: (insta.instaOverview?.reach / 1000000).toFixed(1) + "M", icon: TrendingUp },
-              { label: "Impressions", value: (insta.instaOverview?.impressions / 1000000).toFixed(1) + "M", icon: Eye },
-              { label: "Profile Visits", value: (insta.instaOverview?.profileVisits / 1000).toFixed(0) + "K", icon: Calendar },
+              { label: "Followers", value: formatNumber(insta.instaOverview?.followers), icon: Users },
+              { label: "Profile Reach", value: formatNumber(insta.instaOverview?.reach, 1, "auto"), icon: TrendingUp },
+              { label: "Impressions", value: formatNumber(insta.instaOverview?.impressions, 1, "auto"), icon: Eye },
+              { label: "Profile Visits", value: formatNumber(insta.instaOverview?.profileVisits, 1, "auto"), icon: Calendar },
             ].map((kpi) => (
               <Card key={kpi.label}>
                 <CardContent className="p-4 text-center">
@@ -234,7 +235,7 @@ export default function InfluencerAnalytics() {
                   <LineChart data={insta.instaWeeklyReach || []}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="week" />
-                    <YAxis tickFormatter={(v) => `${(v/1000).toFixed(0)}K`} />
+                    <YAxis tickFormatter={(v) => formatNumber(v, 1, "auto")} />
                     <Tooltip />
                     <Line type="stepAfter" dataKey="reach" stroke="hsl(262, 52%, 55%)" strokeWidth={3} dot={{ fill: "hsl(262, 52%, 55%)", r: 5 }} />
                   </LineChart>

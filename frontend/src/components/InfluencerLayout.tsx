@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, MessageCircle, User, Megaphone,
-  IndianRupee, LogOut, Zap, Building2, CalendarDays,
+  IndianRupee, LogOut, Zap, Building2, CalendarDays, Search
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import {
@@ -23,6 +23,7 @@ function InfluencerSidebar() {
 
   const mainNav = [
     { title: "Dashboard", url: "/influencer/dashboard", icon: LayoutDashboard },
+    { title: "Discover", url: "/brand/discover", icon: Search },
     { title: "Analytics", url: "/influencer/analytics", icon: BarChart3 },
     { title: "Campaigns", url: "/influencer/campaigns", icon: Megaphone },
     { title: "Brands", url: "/influencer/brands", icon: Building2 },

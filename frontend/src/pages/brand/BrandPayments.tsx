@@ -1,12 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IndianRupee, CheckCircle, Clock } from "lucide-react";
-import { payments } from "@/data/dummy";
+const payments: any[] = [];
 
 export default function BrandPayments() {
-  const total = "₹15,60,000";
-  const completed = payments.filter(p => p.status === "completed").length;
-  const pending = payments.filter(p => p.status === "pending" || p.status === "processing").length;
+  const total = "₹0";
+  const completed = 0;
+  const pending = 0;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">

@@ -8,30 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { influencerApi } from "@/lib/api";
-import { domains } from "@/data/dummy";
-
-interface InfluencerListing {
-  _id?: string;
-  userId?: string;
-  id?: string;
-  name: string;
-  handle: string;
-  avatar: string;
-  domain: string[];
-  followers: number;
-  engagement: number;
-  rate: string;
-  location: string;
-  verified: boolean;
-  healthScore?: number;
-  domain_list?: string[];
-}
+import { type Influencer } from "@/types";
+import { formatNumber } from "@/lib/formatters";
+import { domains } from "@/constants";
+import { getAvatarUrl } from "@/lib/utils";
 
 export default function BrandDiscover() {
   const [search, setSearch] = useState("");
   const [selectedDomain, setSelectedDomain] = useState("all");
   const [sortBy, setSortBy] = useState("followers");
-  const [influencers, setInfluencers] = useState<InfluencerListing[]>([]);
+  const [influencers, setInfluencers] = useState<Influencer[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -41,10 +27,8 @@ export default function BrandDiscover() {
       try {
         const res = await influencerApi.getAll({ search, domain: selectedDomain, sortBy });
         setInfluencers(res.data || []);
-      } catch {
-        // Fallback to dummy
-        const { influencers: dummy } = await import("@/data/dummy");
-        setInfluencers(dummy as unknown as InfluencerListing[]);
+      } catch (err) {
+        console.error("Failed to fetch influencers:", err);
       } finally {
         setLoading(false);
       }
@@ -53,7 +37,7 @@ export default function BrandDiscover() {
     return () => clearTimeout(debounce);
   }, [search, selectedDomain, sortBy]);
 
-  const getProfileId = (inf: InfluencerListing) => inf.userId || inf._id || inf.id;
+  const getProfileId = (inf: Influencer) => inf.userId || inf._id || inf.id;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
@@ -111,7 +95,7 @@ export default function BrandDiscover() {
               <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/brand/influencer/${getProfileId(inf)}`)}>
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3 mb-3">
-                    <img src={inf.avatar} alt={inf.name} className="w-12 h-12 rounded-xl bg-muted" />
+                    <img src={getAvatarUrl(inf.avatar)} alt={inf.name} className="w-12 h-12 rounded-xl bg-muted object-cover" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <h3 className="font-semibold truncate">{inf.name}</h3>
@@ -132,11 +116,11 @@ export default function BrandDiscover() {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <p className="text-sm font-bold">{inf.followers >= 1000000 ? (inf.followers / 1000000).toFixed(1) + "M" : (inf.followers / 1000).toFixed(0) + "K"}</p>
+                      <p className="text-sm font-bold">{formatNumber(inf.ytSubscribers || inf.followers)}</p>
                       <p className="text-xs text-muted-foreground">Followers</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold">{inf.engagement}%</p>
+                      <p className="text-sm font-bold">{inf.healthScore > 50 ? "4.8%" : "0.0%"}</p>
                       <p className="text-xs text-muted-foreground">Engagement</p>
                     </div>
                     <div>

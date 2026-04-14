@@ -13,6 +13,7 @@ const analyticsSchema = new mongoose.Schema({
   },
   ytMonthlyViews: [{ month: String, views: Number }],
   ytRecentVideos: [{
+    videoId: String,
     title: String,
     views: Number,
     likes: Number,

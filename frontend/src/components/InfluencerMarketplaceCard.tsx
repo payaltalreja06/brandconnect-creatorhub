@@ -1,12 +1,8 @@
 import { Link } from "react-router-dom";
 import { Heart, Star, MapPin, Instagram, Youtube } from "lucide-react";
-import { type Influencer } from "@/data/dummy";
-
-function formatFollowers(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
-  return n.toString();
-}
+import { type Influencer } from "@/types";
+import { formatNumber } from "@/lib/formatters";
+import { getAvatarUrl } from "@/lib/utils";
 
 // TikTok icon as simple SVG since lucide doesn't have it
 function TikTokIcon({ className }: { className?: string }) {
@@ -97,7 +93,7 @@ export default function InfluencerMarketplaceCard({
           {influencer.followers >= 1000 && (
             <div className="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-semibold flex items-center gap-1">
               <PlatformIcon platform={influencer.platforms[0]} />
-              {formatFollowers(influencer.followers)}
+              {formatNumber(influencer.followers, 1, "million")}
             </div>
           )}
         </div>

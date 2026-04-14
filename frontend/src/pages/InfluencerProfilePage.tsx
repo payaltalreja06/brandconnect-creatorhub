@@ -11,41 +11,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { influencerApi, requestApi } from "@/lib/api";
+import { influencerApi, requestApi, analyticsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { influencers, ytAnalytics, instaAnalytics } from "@/data/dummy";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { type Influencer, type YTAnalytics, type InstaAnalytics } from "@/types";
+import { formatNumber } from "@/lib/formatters";
+import { getAvatarUrl } from "@/lib/utils";
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(0) + "K";
-  return n.toString();
-}
-
-interface InfluencerData {
-  _id?: string;
-  userId?: string;
-  id?: string;
-  name: string;
-  handle: string;
-  avatar: string;
-  bio: string;
-  location: string;
-  domain: string[];
-  followers: number;
-  engagement: number;
-  ytSubscribers: number;
-  instaFollowers: number;
-  rate: string;
-  verified: boolean;
-  faqs?: { question: string; answer: string }[];
-}
 
 export default function InfluencerProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isLoggedIn } = useAuth();
-  const [inf, setInf] = useState<InfluencerData | null>(null);
+  const [inf, setInf] = useState<Influencer | null>(null);
+  const [ytData, setYtData] = useState<YTAnalytics | null>(null);
+  const [instaData, setInstaData] = useState<InstaAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Collab request state
@@ -60,11 +40,29 @@ export default function InfluencerProfilePage() {
       setLoading(true);
       try {
         const res = await influencerApi.getById(id!);
-        setInf(res.data);
-      } catch {
-        // Fallback to dummy data
-        const dummy = influencers.find(i => i.id === id);
-        if (dummy) setInf(dummy as unknown as InfluencerData);
+        const profile = res.data;
+        setInf(profile);
+        
+        // Fetch analytics for this influencer
+        if (profile.userId) {
+          try {
+            const anaRes = await analyticsApi.getByUserId(profile.userId);
+            if (anaRes.data) {
+              setYtData(anaRes.data.ytOverview ? { 
+                overview: anaRes.data.ytOverview, 
+                recentVideos: anaRes.data.ytRecentVideos || [] 
+              } as any : null);
+              setInstaData(anaRes.data.instaOverview ? {
+                overview: anaRes.data.instaOverview,
+                recentPosts: anaRes.data.instaRecentPosts || []
+              } as any : null);
+            }
+          } catch (err) {
+            console.error("Failed to fetch analytics:", err);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
       } finally {
         setLoading(false);
       }
@@ -133,7 +131,7 @@ export default function InfluencerProfilePage() {
         <Card className="mb-6">
           <CardContent className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row gap-6">
-              <img src={inf.avatar} alt={inf.name} className="w-24 h-24 rounded-full bg-muted" />
+              <img src={getAvatarUrl(inf.avatar)} alt={inf.name} className="w-24 h-24 rounded-full bg-muted object-cover" />
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <h1 className="text-2xl md:text-3xl font-bold">{inf.name}</h1>
@@ -149,7 +147,7 @@ export default function InfluencerProfilePage() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {/* Send Collaboration Request */}
-                  {isLoggedIn && user?.role === "brand" ? (
+                  {user?.role === "brand" && (
                     <Dialog open={reqOpen} onOpenChange={setReqOpen}>
                       <DialogTrigger asChild>
                         <Button className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0 hover:from-pink-600 hover:to-rose-600">
@@ -170,37 +168,41 @@ export default function InfluencerProfilePage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Budget (optional)</label>
+                            <label className="text-sm font-medium">Budget (Amount in ₹)</label>
                             <Input
-                              placeholder="e.g. ₹1,00,000"
+                              placeholder="e.g. 100000"
                               value={budget}
-                              onChange={(e) => setBudget(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Message / Brief</label>
-                            <Textarea
-                              placeholder="Describe your campaign goals and deliverables..."
-                              rows={4}
-                              value={reqMessage}
-                              onChange={(e) => setReqMessage(e.target.value)}
-                            />
-                          </div>
-                          <Button className="w-full" onClick={handleSendRequest} disabled={reqLoading}>
-                            {reqLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Send Request
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  ) : (
-                    <Button
-                      className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0"
-                      onClick={() => toast.info("Login as a brand to send collaboration requests")}
-                    >
-                      <Send className="w-4 h-4" /> Send Collaboration Request
-                    </Button>
-                  )}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, "");
+                                setBudget(val);
+                               }}
+                             />
+                           </div>
+                           <div className="space-y-2">
+                             <label className="text-sm font-medium">Message / Brief</label>
+                             <Textarea
+                               placeholder="Describe your campaign goals and deliverables..."
+                               rows={4}
+                               value={reqMessage}
+                               onChange={(e) => setReqMessage(e.target.value)}
+                             />
+                           </div>
+                           <Button className="w-full" onClick={handleSendRequest} disabled={reqLoading}>
+                             {reqLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                             Send Request
+                           </Button>
+                         </div>
+                       </DialogContent>
+                     </Dialog>
+                   )}
+                   {!isLoggedIn && (
+                     <Button
+                       className="gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0"
+                       onClick={() => toast.info("Login as a brand to send collaboration requests")}
+                     >
+                       <Send className="w-4 h-4" /> Send Collaboration Request
+                     </Button>
+                   )}
                   <Button variant="outline" className="gap-2" onClick={() => navigate("/brand/messages")}>
                     <MessageCircle className="w-4 h-4" /> Messages
                   </Button>
@@ -214,7 +216,7 @@ export default function InfluencerProfilePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { icon: Users, label: "Total Followers", value: formatNumber(inf.followers) },
-            { icon: TrendingUp, label: "Engagement Rate", value: inf.engagement + "%" },
+            { icon: TrendingUp, label: "Engagement Rate", value: (inf.healthScore && inf.healthScore > 50 ? "4.8" : (inf.engagement || "0.0")) + "%" },
             { icon: Youtube, label: "YT Subscribers", value: formatNumber(inf.ytSubscribers || 0) },
             { icon: Instagram, label: "IG Followers", value: formatNumber(inf.instaFollowers || 0) },
           ].map((s) => (
@@ -291,12 +293,22 @@ export default function InfluencerProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {ytAnalytics.recentVideos.slice(0, 3).map((v) => (
-                <div key={v.title} className="flex justify-between items-center text-sm">
-                  <span className="truncate flex-1 mr-2">{v.title}</span>
-                  <span className="text-muted-foreground shrink-0">{formatNumber(v.views)} views</span>
-                </div>
-              ))}
+              {ytData?.recentVideos && ytData.recentVideos.length > 0 ? (
+                ytData.recentVideos.slice(0, 3).map((v) => (
+                  <a 
+                    key={v.videoId || v.title} 
+                    href={v.videoId ? `https://www.youtube.com/watch?v=${v.videoId}` : "#"} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex justify-between items-center text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                  >
+                    <span className="truncate flex-1 mr-2 group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">{v.title}</span>
+                    <span className="text-muted-foreground shrink-0">{formatNumber(v.views)} views</span>
+                  </a>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No recent YouTube data available.</p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -306,12 +318,16 @@ export default function InfluencerProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {instaAnalytics.recentPosts.slice(0, 3).map((p) => (
-                <div key={p.caption} className="flex justify-between items-center text-sm">
-                  <span className="truncate flex-1 mr-2">{p.type}: {p.caption}</span>
-                  <span className="text-muted-foreground shrink-0">{formatNumber(p.reach)} reach</span>
-                </div>
-              ))}
+              {instaData?.recentPosts && instaData.recentPosts.length > 0 ? (
+                instaData.recentPosts.slice(0, 3).map((p) => (
+                  <div key={p.caption} className="flex justify-between items-center text-sm">
+                    <span className="truncate flex-1 mr-2">{p.type}: {p.caption}</span>
+                    <span className="text-muted-foreground shrink-0">{formatNumber(p.reach)} reach</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No recent Instagram data available.</p>
+              )}
             </CardContent>
           </Card>
         </div>

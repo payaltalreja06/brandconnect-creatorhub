@@ -125,7 +125,16 @@ export default function CompleteProfilePage() {
               </>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <Button type="button" variant="outline" className="gap-2 border-red-100 hover:bg-red-50 text-red-600 h-12" onClick={() => toast.info("Linking YouTube Channel...")}>
+                <Youtube className="w-5 h-5" /> Sync YouTube
+              </Button>
+              <Button type="button" variant="outline" className="gap-2 border-blue-100 hover:bg-blue-50 text-blue-600 h-12" onClick={() => toast.info("Linking Meta Insights...")}>
+                <Instagram className="w-5 h-5" /> Sync Meta
+              </Button>
+            </div>
+
+            <Button type="submit" className="w-full h-12 mt-4" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Finish & Explore
             </Button>
             

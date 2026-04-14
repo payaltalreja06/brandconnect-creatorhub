@@ -1,18 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Youtube, Instagram, TrendingUp, Eye, Clock, ThumbsUp, MessageSquare, Share2, Bookmark, Users } from "lucide-react";
+import { Youtube, Instagram, TrendingUp, Eye, Clock, ThumbsUp, MessageSquare, Share2, Bookmark, Users, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { ytAnalytics, instaAnalytics } from "@/data/dummy";
+import { analyticsApi } from "@/lib/api";
+import { formatNumber } from "@/lib/formatters";
+import { type YTAnalytics, type InstaAnalytics } from "@/types";
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(0) + "K";
-  return n.toString();
-}
 
 const COLORS = ["hsl(12,80%,62%)", "hsl(222,62%,18%)", "hsl(173,58%,39%)", "hsl(43,96%,56%)"];
 
@@ -35,6 +32,46 @@ function StatCard({ icon: Icon, label, value }: { icon: any; label: string; valu
 }
 
 export default function AnalyticsPage() {
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setLoading(true);
+      try {
+        const res = await analyticsApi.getMe();
+        setAnalytics(res.data);
+      } catch (err) {
+        console.error("Failed to fetch analytics:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  }
+
+  if (!analytics) {
+    return <div className="p-20 text-center">No analytics data available. Connect your accounts to see data.</div>;
+  }
+
+  const ytAnalytics = {
+    overview: analytics.ytOverview || {},
+    monthlyViews: analytics.ytMonthlyViews || [],
+    demographics: analytics.ytDemographics || [],
+    recentVideos: analytics.ytRecentVideos || []
+  };
+
+  const instaAnalytics = {
+    overview: analytics.instaOverview || {},
+    weeklyReach: analytics.instaWeeklyReach || [],
+    engagementByType: analytics.instaEngagementByType || [],
+    recentPosts: analytics.instaRecentPosts || []
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>

@@ -7,7 +7,8 @@ import FilterSidebar, {
 } from "@/components/FilterSidebar";
 import InfluencerMarketplaceCard from "@/components/InfluencerMarketplaceCard";
 import MarketplaceFooter from "@/components/MarketplaceFooter";
-import { influencers } from "@/data/dummy";
+import { influencerApi } from "@/lib/api";
+import { type Influencer } from "@/types";
 
 function matchFollowers(followers: number, range: string): boolean {
   switch (range) {
@@ -66,7 +67,24 @@ function matchLocation(location: string, filter: string): boolean {
 export default function InfluencersPage() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState("");
+  const [influencers, setInfluencers] = useState<Influencer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(12);
+
+  useEffect(() => {
+    const fetchInfluencers = async () => {
+      setLoading(true);
+      try {
+        const res = await influencerApi.getAll();
+        setInfluencers(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch influencers:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInfluencers();
+  }, []);
 
   const filtered = useMemo(() => {
     return influencers.filter((inf) => {
@@ -74,53 +92,42 @@ export default function InfluencersPage() {
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matches =
-          inf.name.toLowerCase().includes(q) ||
-          inf.handle.toLowerCase().includes(q) ||
-          inf.domain.some((d) => d.toLowerCase().includes(q)) ||
-          inf.bio.toLowerCase().includes(q);
+          inf.name?.toLowerCase().includes(q) ||
+          inf.handle?.toLowerCase().includes(q) ||
+          inf.domain?.some((d) => d.toLowerCase().includes(q)) ||
+          inf.bio?.toLowerCase().includes(q);
         if (!matches) return false;
       }
 
       // Platform
       if (
         filters.platform !== "any" &&
-        !inf.platforms.includes(filters.platform)
+        !inf.platforms?.includes(filters.platform)
       )
         return false;
 
       // Content Type
       if (
         filters.contentType !== "any" &&
-        !inf.contentType.includes(filters.contentType)
+        !inf.contentType?.includes(filters.contentType)
       )
         return false;
 
       // Followers
-      if (filters.followers !== "any" && !matchFollowers(inf.followers, filters.followers))
+      if (filters.followers !== "any" && !matchFollowers(inf.followers || 0, filters.followers))
         return false;
 
       // Price
-      if (filters.price !== "any" && !matchPrice(inf.price, filters.price))
+      if (filters.price !== "any" && !matchPrice(inf.price || 0, filters.price))
         return false;
 
       // Gender
       if (filters.gender !== "any" && inf.gender !== filters.gender)
         return false;
 
-      // Age
-      if (filters.age !== "any" && inf.age !== filters.age) return false;
-
-      // Language
-      if (filters.language !== "any" && inf.language !== filters.language)
-        return false;
-
-      // Location
-      if (filters.location !== "any" && !matchLocation(inf.location, filters.location))
-        return false;
-
       return true;
     });
-  }, [filters, searchQuery]);
+  }, [influencers, filters, searchQuery]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;

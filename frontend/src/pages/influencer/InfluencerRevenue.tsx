@@ -2,7 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IndianRupee, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { revenueData, payments } from "@/data/dummy";
+const revenueData = {
+  totalEarnings: "₹0",
+  completedPayments: 0,
+  pendingPayments: 0,
+  monthlyEarnings: [],
+  earningsByBrand: []
+};
+const payments: any[] = [];
 
 export default function InfluencerRevenue() {
   return (

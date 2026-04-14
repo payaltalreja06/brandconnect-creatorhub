@@ -76,7 +76,9 @@ def resolve_channel_id(query: str, api_key: str) -> tuple[str, str]:
         if not items:
             raise ValueError(f"No channel found for ID: {query}")
         item = items[0]
-        return item["id"], item["snippet"]["title"]
+        avatar_url = item["snippet"].get("thumbnails", {}).get("high", {}).get("url") or \
+                     item["snippet"].get("thumbnails", {}).get("default", {}).get("url")
+        return item["id"], item["snippet"]["title"], avatar_url
 
     # ── Handle or name search ──────────────────────────────────────────────────
     search_query = query.lstrip("@")
@@ -96,8 +98,11 @@ def resolve_channel_id(query: str, api_key: str) -> tuple[str, str]:
     item      = items[0]
     channel_id   = item["snippet"]["channelId"]
     channel_name = item["snippet"]["channelTitle"]
+    avatar_url   = item["snippet"].get("thumbnails", {}).get("high", {}).get("url") or \
+                   item["snippet"].get("thumbnails", {}).get("default", {}).get("url")
+    
     log.info(f"Matched channel: '{channel_name}' ({channel_id})")
-    return channel_id, channel_name
+    return channel_id, channel_name, avatar_url
 
 
 def fetch_channel_stats(channel_id: str, api_key: str) -> dict:
@@ -173,7 +178,7 @@ def fetch_and_write(query: str, api_key: str, max_videos: int) -> Path:
     Returns the path of the written file.
     """
     # 1. Resolve channel
-    channel_id, channel_name = resolve_channel_id(query, api_key)
+    channel_id, channel_name, avatar_url = resolve_channel_id(query, api_key)
 
     # 2. Fetch stats
     log.info(f"Fetching stats for '{channel_name}'...")
@@ -186,6 +191,7 @@ def fetch_and_write(query: str, api_key: str, max_videos: int) -> Path:
     payload = {
         "channelId":   channel_id,
         "channelName": channel_name,
+        "avatar":      avatar_url,
         **stats,      # subscribers, totalViews, totalVideos
         "videos":     videos,
     }

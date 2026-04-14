@@ -1,30 +1,63 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Globe, Mail, Edit, Plus, Trash } from "lucide-react";
-import { brands, FAQ } from "@/data/dummy";
+import { Building2, Globe, Mail, Edit, Plus, Trash, Loader2 } from "lucide-react";
+import { brandApi } from "@/lib/api";
+import { type Brand, type FAQ } from "@/types";
 
 export default function BrandProfile() {
-  const brand = brands[0]; // Current brand
-  const [faqs, setFaqs] = useState<FAQ[]>(brand.faqs || []);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newFaqQ, setNewFaqQ] = useState("");
   const [newFaqA, setNewFaqA] = useState("");
   const [isFaqOpen, setIsFaqOpen] = useState(false);
 
-  const handleAddFaq = () => {
+  useEffect(() => {
+    const fetchBrand = async () => {
+      setLoading(true);
+      try {
+        const res = await brandApi.getMe();
+        setBrand(res.data);
+        setFaqs(res.data?.faqs || []);
+      } catch (err) {
+        console.error("Failed to fetch brand profile:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBrand();
+  }, []);
+
+  const handleAddFaq = async () => {
     if (!newFaqQ || !newFaqA) return;
-    setFaqs([...faqs, { question: newFaqQ, answer: newFaqA }]);
+    const updatedFaqs = [...faqs, { question: newFaqQ, answer: newFaqA }];
+    setFaqs(updatedFaqs); // Optimistic update
+    try {
+      await brandApi.updateMe({ faqs: updatedFaqs });
+    } catch {
+      // Revert on error
+    }
     setNewFaqQ("");
     setNewFaqA("");
     setIsFaqOpen(false);
   };
   
-  const handleRemoveFaq = (index: number) => {
-    setFaqs(faqs.filter((_, i) => i !== index));
+  const handleRemoveFaq = async (index: number) => {
+    const updatedFaqs = faqs.filter((_, i) => i !== index);
+    setFaqs(updatedFaqs);
+    try {
+      await brandApi.updateMe({ faqs: updatedFaqs });
+    } catch {
+      // Revert on error
+    }
   };
+
+  if (loading) return <div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  if (!brand) return <div className="p-20 text-center">Brand profile not found.</div>;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
@@ -39,11 +72,17 @@ export default function BrandProfile() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-6">
-            <span className="text-5xl">{brand.logo}</span>
+            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0 overflow-hidden border">
+              {brand.logo?.startsWith("http") ? (
+                <img src={brand.logo} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl">{brand.logo || "🏢"}</span>
+              )}
+            </div>
             <div>
               <h2 className="text-xl font-bold">{brand.name}</h2>
               <p className="text-muted-foreground text-sm">{brand.industry}</p>
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{brand.website}</span>
                 <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{brand.contactEmail}</span>
               </div>
@@ -110,3 +149,4 @@ export default function BrandProfile() {
     </div>
   );
 }
+

@@ -101,8 +101,16 @@ export default function BrandCampaigns() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Budget</label>
-                    <Input placeholder="e.g., ₹1,00,000" value={newBudget} onChange={e => setNewBudget(e.target.value)} />
+                    <label className="text-sm font-medium">Budget (Amount in ₹)</label>
+                    <Input 
+                      type="text"
+                      placeholder="e.g. 100000" 
+                      value={newBudget} 
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        setNewBudget(val);
+                      }} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Deadline</label>
