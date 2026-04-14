@@ -19,8 +19,8 @@ services:
         sync: false # Set this in Render dashboard
       - key: FRONTEND_URL
         fromService:
-          name: brand-influencer-frontend
-          type: web
+          name: collabrix
+          type: static
           property: url
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
@@ -30,7 +30,7 @@ services:
         sync: false
 
   # Frontend Service
-  - type: web
+  - type: static
     name: collabrix
     env: static
     plan: free
@@ -41,13 +41,13 @@ services:
     envVars:
       - key: VITE_API_URL
         fromService:
-          name: brand-influencer-backend
+          name: collabrix-api
           type: web
           property: url
           suffix: /api
       - key: VITE_SOCKET_URL
         fromService:
-          name: brand-influencer-backend
+          name: collabrix-api
           type: web
           property: url
     routes:
