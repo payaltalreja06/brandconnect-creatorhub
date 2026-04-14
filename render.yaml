@@ -1,7 +1,7 @@
 services:
   # Backend Service
   - type: web
-    name: brand-influencer-backend
+    name: collabrix-api
     env: node
     plan: free
     region: ohio
@@ -31,7 +31,7 @@ services:
 
   # Frontend Service
   - type: web
-    name: brand-influencer-frontend
+    name: collabrix
     env: static
     plan: free
     region: ohio
