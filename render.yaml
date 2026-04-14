@@ -20,7 +20,7 @@ services:
       - key: FRONTEND_URL
         fromService:
           name: collabrix
-          type: static
+          type: web
           property: host
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
