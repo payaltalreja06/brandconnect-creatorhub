@@ -1,13 +1,41 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Send, Megaphone, Target, CheckCircle } from "lucide-react";
-const brands: any[] = [];
+import { ArrowLeft, Globe, Send, Megaphone, Target, CheckCircle, Loader2 } from "lucide-react";
+import { brandApi } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function BrandProfilePage() {
   const { id } = useParams();
-  const brand = brands.find((b) => b.id === id);
+  const [brand, setBrand] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBrand = async () => {
+      try {
+        if (!id) return;
+        const res = await brandApi.getById(id);
+        setBrand(res.data);
+      } catch (err) {
+        console.error("Failed to load brand:", err);
+        toast.error("Failed to load brand profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBrand();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground font-medium">Loading brand profile...</p>
+      </div>
+    );
+  }
 
   if (!brand) {
     return (
@@ -40,12 +68,18 @@ export default function BrandProfilePage() {
         <div className="md:col-span-1 space-y-6">
           <Card>
              <CardContent className="p-6 text-center">
-               <div className="text-6xl mb-4 flex justify-center">{brand.logo}</div>
+               <div className="mb-4 flex justify-center">
+                 {brand.logo && brand.logo.startsWith('http') ? (
+                   <img src={brand.logo} alt={brand.name} className="w-24 h-24 rounded-2xl object-cover bg-muted shadow-sm" />
+                 ) : (
+                   <span className="text-6xl">{brand.logo || "🏢"}</span>
+                 )}
+               </div>
                <h2 className="text-xl font-bold flex items-center justify-center gap-2">
                  {brand.name} <CheckCircle className="w-5 h-5 text-blue-500" />
                </h2>
-               <p className="text-sm text-muted-foreground mt-1 mb-4">{brand.domain}</p>
-               <Badge className="mb-6">{brand.industry}</Badge>
+               <p className="text-sm text-muted-foreground mt-1 mb-4">{brand.domain || brand.industry || "General"}</p>
+               <Badge className="mb-6">{brand.industry || "Brand"}</Badge>
                
                <div className="flex gap-2 justify-center">
                  <Link to="/influencer/messages" className="w-full">
