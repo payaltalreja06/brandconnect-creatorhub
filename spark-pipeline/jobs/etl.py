@@ -18,7 +18,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] — 
 log = logging.getLogger("yt-real-data-driver")
 
 # ── Parameters ─────────────────────────────────────────────────────────────────
-BASE_DATA_DIR = "data/yt"
+PROJECT_ROOT   = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+BASE_DATA_DIR  = os.getenv("YT_DATA_DIR", os.path.join(PROJECT_ROOT, "data", "yt"))
 RAW_PATH      = os.path.join(BASE_DATA_DIR, "raw")
 MONGO_URI     = os.environ.get("MONGO_URI", "")
 DATABASE      = "test"
@@ -61,13 +62,24 @@ def run_real_data_etl():
         log.error(f"Failed to connect: {e}")
         return
 
-    # Discover and process
+    # Discover only the newest extraction for each channel so old snapshots
+    # cannot overwrite current MongoDB values.
     data_files = []
     if os.path.exists(RAW_PATH):
-        for root, dirs, files in os.walk(RAW_PATH):
-            for file in files:
-                if file == "data.json":
-                    data_files.append(os.path.join(root, file))
+        for channel_entry in os.scandir(RAW_PATH):
+            if not channel_entry.is_dir():
+                continue
+
+            dated_files = []
+            for date_entry in os.scandir(channel_entry.path):
+                if not date_entry.is_dir():
+                    continue
+                data_path = os.path.join(date_entry.path, "data.json")
+                if os.path.isfile(data_path):
+                    dated_files.append((date_entry.name, data_path))
+
+            if dated_files:
+                data_files.append(max(dated_files, key=lambda item: item[0])[1])
     
     for file_path in data_files:
         try:
@@ -114,6 +126,27 @@ def run_real_data_etl():
             total_v_comm  = sum(int(v.get("comments", 0)) for v in raw_videos)
             
             avg_engagement_rate = calculate_engagement_rate(total_v_views, total_v_likes, total_v_comm)
+            health_score = int(avg_engagement_rate * 15) if avg_engagement_rate < 6.6 else 98
+
+            profile_update = {
+                "followers": subs,
+                "ytSubscribers": subs,
+                "engagement": avg_engagement_rate,
+                "healthScore": health_score,
+                "updatedAt": datetime.now(timezone.utc),
+            }
+
+            if final_avatar_url:
+                profile_update["avatar"] = final_avatar_url
+
+            profile_result = influencer_col.update_one(
+                {"userId": user_id},
+                {"$set": profile_update},
+            )
+            if profile_result.matched_count == 0:
+                log.warning(f"No influencer profile found for userId {user_id} ({channel})")
+            else:
+                log.info(f"Updated influencer profile metrics for {channel}: {subs} subscribers")
             
             # b. Building Detailed Video Objects (Using Real CTR estimation)
             yt_recent_videos = []
@@ -194,7 +227,7 @@ def run_real_data_etl():
                     {"day": "Mon", "engagement": 65}, {"day": "Wed", "engagement": 72}, {"day": "Sun", "engagement": 88}
                 ],
                 # REAL KPI-BASED HEALTH
-                "healthScore": int(avg_engagement_rate * 15) if avg_engagement_rate < 6.6 else 98,
+                "healthScore": health_score,
                 "healthBreakdown": {
                     "engagement": {"weight": 40, "score": int(min(avg_engagement_rate * 10, 100))},
                     "growth": {"weight": 30, "score": random.randint(85, 95)},

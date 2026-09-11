@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap, Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
+import { Zap, Eye, EyeOff, Loader2, Mail, Lock, Building2, UserRound } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const demoAccounts = [
+    { name: "Raj Shamani", role: "Influencer", email: "raj.shamani@gmail.com" },
+    { name: "Ranveer Allahbadia", role: "Influencer", email: "ranveerallahbadia@gmail.com" },
+    { name: "GlowSkin", role: "Brand", email: "glowskin@collabrix.com" },
+  ];
+
+  const fillDemoAccount = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword("password123");
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +145,37 @@ export default function LoginPage() {
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
+
+            <div className="mt-6 border-t border-border pt-5">
+              <p className="mb-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Demo accounts
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {demoAccounts.map((account) => {
+                  const Icon = account.role === "Brand" ? Building2 : UserRound;
+                  return (
+                    <button
+                      key={account.email}
+                      type="button"
+                      onClick={() => fillDemoAccount(account.email)}
+                      disabled={isLoading}
+                      className="rounded-lg border border-border bg-muted/40 p-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Use ${account.name} demo account`}
+                    >
+                      <div className="mb-2 flex items-center gap-1.5 text-primary">
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="text-xs font-semibold">{account.role}</span>
+                      </div>
+                      <p className="truncate text-sm font-medium">{account.name}</p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">{account.email}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Click an account to fill in its credentials. Password: password123
+              </p>
+            </div>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}

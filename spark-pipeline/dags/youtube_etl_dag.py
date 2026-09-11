@@ -67,23 +67,16 @@ with DAG(
         provide_context=True,
     )
 
-    # ── Task 2: Spark ETL via docker exec ─────────────────────────────────────
-    spark_job = BashOperator(
-        task_id="spark_etl_youtube",
+    # ── Task 2: Load extracted JSON into MongoDB ──────────────────────────────
+    etl_job = BashOperator(
+        task_id="load_youtube_etl",
         bash_command=(
-            "echo '[Airflow] Triggering Spark ETL job at $(date)' && "
-            "docker exec spark spark-submit "
-                "--conf spark.driver.memory=1g "
-                "--conf spark.executor.memory=1g "
-                "/opt/spark/jobs/etl.py && "
-            "echo '[Airflow] Spark ETL job finished successfully at $(date)'"
+            "echo '[Airflow] Loading extracted YouTube data into MongoDB at $(date)' && "
+            "python /opt/airflow/jobs/etl.py && "
+            "echo '[Airflow] MongoDB ETL finished successfully at $(date)'"
         ),
-        # If Spark exits with non-zero code, Airflow marks this task FAILED
-        # and retries according to default_args.retries
         env={
-            # Pass any env-vars Spark job needs
-            "SPARK_MASTER":  "local[*]",
-            # "MONGO_URI":   "{{ var.value.mongo_uri }}",  # uncomment when ready
+            "YT_DATA_DIR": "/opt/airflow/data/yt",
         },
         append_env=True,
         do_xcom_push=False,
@@ -117,4 +110,4 @@ with DAG(
 
     # ── Task Dependencies ──────────────────────────────────────────────────────
     # ingestion (validate files) → spark_job (ETL) → post_check (verify output)
-    ingestion >> spark_job >> post_check
+    ingestion >> etl_job >> post_check
