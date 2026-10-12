@@ -16,7 +16,7 @@ const statusConfig = {
 };
 
 export default function InfluencerCampaigns() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

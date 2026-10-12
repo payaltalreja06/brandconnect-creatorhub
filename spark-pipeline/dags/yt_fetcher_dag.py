@@ -171,3 +171,4 @@ with DAG(
     )
 
     fetch_task
+    
