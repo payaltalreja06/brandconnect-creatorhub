@@ -102,7 +102,25 @@ Use these accounts to explore the platform after seeding:
 
 The platform includes a dedicated Data Engineering layer for processing YouTube analytics using **PySpark** and **Apache Airflow**.
 
+### 🔑 YouTube Data API credentials
 
+The `yt_fetcher` Airflow DAG requires a Google API key with **YouTube Data API v3** enabled.
+
+1. Create a key in Google Cloud Console and restrict it to the YouTube Data API v3.
+2. Store it in the local, Git-ignored `spark-pipeline/.env` file:
+
+   ```env
+   YT_API_KEY=your_youtube_data_api_key
+   MONGO_URI=your_mongodb_connection_uri
+   ```
+
+3. From `spark-pipeline`, start Airflow with `docker compose up --build`. Compose passes
+   these variables to the Airflow container; the key is not needed in the frontend.
+
+Never put a real key in this README, source code, Docker configuration, or a `VITE_` variable.
+The repository ignores `.env` files; verify before committing with
+`git check-ignore -v spark-pipeline/.env`. If a key has ever been committed or shared publicly,
+revoke it in Google Cloud Console and create a replacement.
 
 ### 🔹 Full Stack (Docker & Airflow)
 Automated local pipeline with scheduling and monitoring.
