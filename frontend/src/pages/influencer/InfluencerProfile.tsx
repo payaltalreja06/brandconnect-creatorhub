@@ -10,6 +10,7 @@ import { MapPin, Youtube, Instagram, Shield, Edit, Plus, Trash, Loader2, Save, X
 import { influencerApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { formatEngagementRate } from "@/lib/formatters";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Camera } from "lucide-react";
 import { getAvatarUrl } from "@/lib/utils";
@@ -320,7 +321,7 @@ export default function InfluencerProfile() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Engagement Rate</span>
-              <span className="font-medium">{profile.engagement || 0}%</span>
+              <span className="font-medium">{formatEngagementRate(profile.engagement)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Total Followers</span>

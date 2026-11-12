@@ -10,6 +10,38 @@ dotenv.config();
 
 const mongoUri = process.env.MONGODB_URI;
 
+const deleteDuplicateProfile = async (profileId) => {
+  if (!mongoUri) {
+    throw new Error('MONGODB_URI must be set before running duplicate cleanup.');
+  }
+  if (!mongoose.Types.ObjectId.isValid(profileId)) {
+    throw new Error('Provide a valid influencer profile ObjectId.');
+  }
+
+  await mongoose.connect(mongoUri);
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      const profile = await InfluencerProfile.findById(profileId).session(session);
+      if (!profile) {
+        throw new Error(`Influencer profile ${profileId} was not found.`);
+      }
+
+      const userId = profile.userId;
+      const profileResult = await InfluencerProfile.deleteOne({ _id: profile._id }, { session });
+      const analyticsResult = await Analytics.deleteMany({ userId }, { session });
+      const userResult = await User.deleteOne({ _id: userId }, { session });
+
+      console.log(`Removed duplicate profile: ${profile.name} (${profile.handle})`);
+      console.log(`Deleted ${profileResult.deletedCount} profile, ${analyticsResult.deletedCount} analytics, and ${userResult.deletedCount} user record.`);
+    });
+  } finally {
+    await session.endSession();
+    await mongoose.disconnect();
+  }
+};
+
 const seedData = async () => {
   try {
     await mongoose.connect(mongoUri);
@@ -180,4 +212,21 @@ const seedData = async () => {
   }
 };
 
-seedData();
+const [mode, profileId, ...extraArgs] = process.argv.slice(2);
+if (mode === '--delete-duplicate-profile') {
+  if (!profileId || extraArgs.length) {
+    console.error('Usage: node seed2.js --delete-duplicate-profile <influencer-profile-id>');
+    process.exitCode = 1;
+  } else {
+    deleteDuplicateProfile(profileId).catch((err) => {
+      console.error('❌ Duplicate cleanup failed:', err.message);
+      process.exitCode = 1;
+    });
+  }
+} else if (mode) {
+  console.error(`Unknown option: ${mode}`);
+  console.error('Usage: node seed2.js [--delete-duplicate-profile <influencer-profile-id>]');
+  process.exitCode = 1;
+} else {
+  seedData();
+}

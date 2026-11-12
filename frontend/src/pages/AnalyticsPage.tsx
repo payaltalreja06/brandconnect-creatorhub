@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { analyticsApi } from "@/lib/api";
-import { formatNumber } from "@/lib/formatters";
+import { formatEngagementRate, formatNumber } from "@/lib/formatters";
 import { type YTAnalytics, type InstaAnalytics } from "@/types";
 
 
@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={Eye} label="Total Views" value={formatNumber(ytAnalytics.overview.totalViews)} />
             <StatCard icon={Users} label="Subscribers" value={formatNumber(ytAnalytics.overview.subscribers)} />
-            <StatCard icon={Clock} label="Avg Watch Time" value={ytAnalytics.overview.avgWatchTime} />
+            <StatCard icon={Clock} label="Avg Watch Time" value={ytAnalytics.overview.avgWatchTime || "—"} />
             <StatCard icon={TrendingUp} label="Total Videos" value={String(ytAnalytics.overview.totalVideos)} />
           </div>
 
@@ -141,12 +141,23 @@ export default function AnalyticsPage() {
                 </TableHeader>
                 <TableBody>
                   {ytAnalytics.recentVideos.map((v) => (
-                    <TableRow key={v.title}>
-                      <TableCell className="font-medium max-w-[200px] truncate">{v.title}</TableCell>
+                    <TableRow key={v.videoId || v.title}>
+                      <TableCell className="font-medium max-w-[200px] truncate">
+                        {v.videoId ? (
+                          <a
+                            href={`https://www.youtube.com/watch?v=${encodeURIComponent(v.videoId)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary hover:underline"
+                          >
+                            {v.title}
+                          </a>
+                        ) : v.title}
+                      </TableCell>
                       <TableCell className="text-right">{formatNumber(v.views)}</TableCell>
                       <TableCell className="text-right">{v.ctr}%</TableCell>
-                      <TableCell className="text-right">{v.avgViewDuration}</TableCell>
-                      <TableCell className="text-right">{v.retention}%</TableCell>
+                      <TableCell className="text-right">{v.avgViewDuration || "—"}</TableCell>
+                      <TableCell className="text-right">{v.retention == null ? "—" : `${v.retention}%`}</TableCell>
                       <TableCell className="text-right">{formatNumber(v.likes)}</TableCell>
                       <TableCell className="text-right">{formatNumber(v.comments)}</TableCell>
                     </TableRow>
@@ -189,7 +200,7 @@ export default function AnalyticsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                     <XAxis type="number" tick={{ fontSize: 12 }} />
                     <YAxis type="category" dataKey="type" tick={{ fontSize: 12 }} width={70} />
-                    <Tooltip formatter={(v: number) => `${v}%`} />
+                    <Tooltip formatter={(v: number) => formatEngagementRate(v)} />
                     <Bar dataKey="rate" fill="hsl(222,62%,18%)" radius={[0, 6, 6, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

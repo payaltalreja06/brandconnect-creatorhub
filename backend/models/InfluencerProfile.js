@@ -30,6 +30,8 @@ const influencerProfileSchema = new mongoose.Schema({
   ytSubscribers: { type: Number, default: 0 },
   instaFollowers: { type: Number, default: 0 },
   healthScore: { type: Number, default: 0 },
+  youtubeChannelId: { type: String, trim: true },
+  youtubeAvatarSource: { type: String, select: false },
   verified: { type: Boolean, default: false },
   rating: { type: Number, default: 0 },
   reviewCount: { type: Number, default: 0 },
@@ -46,6 +48,8 @@ const influencerProfileSchema = new mongoose.Schema({
   tiktok: { type: String, default: '' },
   updatedAt: { type: Date, default: Date.now },
 });
+
+influencerProfileSchema.index({ youtubeChannelId: 1 }, { unique: true, sparse: true });
 
 influencerProfileSchema.pre('save', function() {
   this.updatedAt = new Date();

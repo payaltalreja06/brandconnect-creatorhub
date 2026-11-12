@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { formatEngagementRate } from "@/lib/formatters";
 const postingData: any[] = [];
 const campaigns: any[] = [];
 
@@ -93,7 +94,7 @@ export default function InfluencerSchedule() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                 <XAxis dataKey="time" tick={{ fontSize: 12 }} stroke="hsl(215,16%,47%)" />
                 <YAxis tick={{ fontSize: 12 }} stroke="hsl(215,16%,47%)" />
-                <Tooltip formatter={(v: number) => [`${v}%`, "Engagement"]} />
+                <Tooltip formatter={(v: number) => [formatEngagementRate(v), "Engagement"]} />
                 <Bar dataKey="engagement" fill="hsl(43,96%,56%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -109,7 +110,7 @@ export default function InfluencerSchedule() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
               <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="hsl(215,16%,47%)" />
               <YAxis tick={{ fontSize: 12 }} stroke="hsl(215,16%,47%)" />
-              <Tooltip formatter={(v: number) => [`${v}%`, "Engagement"]} />
+              <Tooltip formatter={(v: number) => [formatEngagementRate(v), "Engagement"]} />
               <Bar dataKey="engagement" fill="hsl(262,52%,55%)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

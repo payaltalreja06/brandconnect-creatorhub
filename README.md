@@ -105,11 +105,14 @@ The platform includes a dedicated Data Engineering layer for processing YouTube 
 
 
 ### 🔹 Full Stack (Docker & Airflow)
-Automated, production-ready pipeline with scheduling and monitoring.
+Automated local pipeline with scheduling and monitoring.
 1.  **Navigate to pipeline**: `cd spark-pipeline`
 2.  **Start Services**: `docker compose up --build`
 3.  **Access Airflow**: [http://localhost:8181](http://localhost:8181) (User: `admin`, Pass: `admin`)
-4.  **Trigger DAG**: Enable and run the `yt_fetcher` DAG.
+4.  **Start extraction**: Enable and run the `yt_fetcher` DAG. It saves fetched channel data under `data/yt/raw`.
+5.  **Automatic processing**: After raw data is saved successfully, Airflow triggers `brandconnect_youtube_etl`, which runs the PySpark job with `spark-submit` and syncs the results.
+
+The extraction and processing DAGs are separate so fetch failures cannot start ETL with incomplete inputs. Airflow task logs are stored in `spark-pipeline/airflow-logs`; optional Airflow configuration files can be placed in `spark-pipeline/config`.
 
 
 

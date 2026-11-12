@@ -9,11 +9,11 @@ const uri = process.env.MONGO_URI || "mongodb+srv://payal08:A6bOLU8T0YAkIPZY@clu
 
 const realCreators = [
     { name: "MrBeast", email: "beast@gmail.com", handle: "@MrBeast", yt: "UCX6OQ3DkcsbYNE6H8uQQuVA" },
-    { name: "Technical Guruji", email: "tg@gmail.com", handle: "@TechnicalGuruji", yt: "UCX6OQ3DkcsbYNE6H8uQQuVA" },
-    { name: "Kurzgesagt", email: "kurz@gmail.com", handle: "@Kurzgesagt", yt: "UCX6OQ3DkcsbYNE6H8uQQuVA" },
-    { name: "Unbox Therapy", email: "unbox@gmail.com", handle: "@unboxtherapy", yt: "UCX6OQ3DkcsbYNE6H8uQQuVA" },
+    { name: "Technical Guruji", email: "tg@gmail.com", handle: "@TechnicalGuruji", yt: "@TechnicalGuruji" },
+    { name: "Kurzgesagt", email: "kurz@gmail.com", handle: "@Kurzgesagt", yt: "@Kurzgesagt" },
+    { name: "Unbox Therapy", email: "unbox@gmail.com", handle: "@unboxtherapy", yt: "@unboxtherapy" },
     { name: "MKBHD", email: "marques@gmail.com", handle: "@mkbhd", yt: "UCBJycsmduvYELgKnCoRPNoA" },
-    { name: "Veritasium", email: "verita@gmail.com", handle: "@veritasium", yt: "UCBJycsmduvYELgKnCoRPNoA" },
+    { name: "Veritasium", email: "verita@gmail.com", handle: "@veritasium", yt: "@veritasium" },
     { name: "The Rebel Kid", email: "apoorva.real@gmail.com", handle: "@the.rebelkid", yt: "@the.rebelkid" },
     { name: "Arsh Goyal Real", email: "arsh.real@gmail.com", handle: "@ArshGoyal", yt: "@ArshGoyal" },
     { name: "Codebasics Real", email: "code.real@gmail.com", handle: "@codebasics", yt: "@codebasics" },
@@ -45,6 +45,7 @@ async function seed() {
                     name: data.name,
                     handle: data.handle,
                     youtube: data.yt, // The key for our Spark Sync
+                    ...(data.yt.startsWith("UC") ? { youtubeChannelId: data.yt } : {}),
                     setupComplete: true
                 });
                 console.log(`✅ Seeded: ${data.name}`);

@@ -3,6 +3,7 @@ import { BadgeCheck, MapPin, Youtube, Instagram, Users, TrendingUp, Edit, Settin
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatEngagementRate } from "@/lib/formatters";
 const influencers: any[] = [];
 
 function formatNumber(n: number): string {
@@ -50,7 +51,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { icon: Users, label: "Followers", value: formatNumber(me.followers) },
-            { icon: TrendingUp, label: "Engagement", value: me.engagement + "%" },
+            { icon: TrendingUp, label: "Engagement", value: formatEngagementRate(me.engagement) },
             { icon: Youtube, label: "YouTube", value: formatNumber(me.ytSubscribers || 0) },
             { icon: Instagram, label: "Instagram", value: formatNumber(me.instaFollowers || 0) },
           ].map((s) => (

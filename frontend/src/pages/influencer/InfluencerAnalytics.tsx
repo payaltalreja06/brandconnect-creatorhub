@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { analyticsApi } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { formatNumber } from "@/lib/formatters";
+import { formatEngagementRate, formatNumber } from "@/lib/formatters";
 
 const COLORS = ["hsl(12, 80%, 62%)", "hsl(222, 62%, 18%)", "hsl(173, 58%, 39%)", "hsl(43, 96%, 56%)", "hsl(262, 52%, 55%)"];
 
@@ -58,8 +58,8 @@ export default function InfluencerAnalytics() {
         <div className="max-w-md">
           <h2 className="text-xl font-bold font-display">Synchronizing your channel...</h2>
           <p className="text-muted-foreground mt-2">
-            Detailed analytics are currently being calculated. 
-            Please run the Spark ETL pipeline to populate your demographics and engagement trends.
+            No recent YouTube snapshot is available yet. Run the YouTube fetch DAG, then the ETL DAG.
+            Watch time, retention, and audience demographics require YouTube Analytics API access.
           </p>
         </div>
         <Button onClick={() => window.location.reload()} variant="outline" className="mt-4 gap-2">
@@ -105,8 +105,8 @@ export default function InfluencerAnalytics() {
             {[
               { label: "Subscribers", value: formatNumber(ana.ytOverview?.subscribers), icon: Users },
               { label: "Total Views", value: formatNumber(ana.ytOverview?.totalViews, 1, "auto"), icon: Eye },
-              { label: "Avg Watch Time", value: ana.ytOverview?.avgWatchTime || "4:30", icon: Clock },
-              { label: "Total Videos", value: ana.ytOverview?.totalVideos?.toString() || "245", icon: Play },
+              { label: "Avg Watch Time", value: ana.ytOverview?.avgWatchTime || "—", icon: Clock },
+              { label: "Total Videos", value: ana.ytOverview?.totalVideos?.toString() || "—", icon: Play },
             ].map((kpi) => (
               <Card key={kpi.label}>
                 <CardContent className="p-4">
@@ -147,11 +147,11 @@ export default function InfluencerAnalytics() {
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="50" stroke="hsl(220,13%,90%)" strokeWidth="12" fill="none" />
                     <circle cx="60" cy="60" r="50" stroke="hsl(12, 80%, 62%)" strokeWidth="12" fill="none"
-                      strokeDasharray={`${(ana.healthScore || 68) * 3.14} ${100 * 3.14}`} strokeLinecap="round" />
+                      strokeDasharray={`${(ana.healthScore ?? 0) * 3.14} ${100 * 3.14}`} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold">{ana.healthScore || 0}%</span>
-                    <span className="text-[10px] text-muted-foreground">Avg Retention</span>
+                    <span className="text-2xl font-bold">{ana.healthScore ?? "—"}{ana.healthScore == null ? "" : "%"}</span>
+                    <span className="text-[10px] text-muted-foreground">Engagement Health</span>
                   </div>
                 </div>
                 <div className="mt-6 text-xs text-muted-foreground text-center">
@@ -177,12 +177,23 @@ export default function InfluencerAnalytics() {
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {(ana.ytRecentVideos || []).map((v: any) => (
-                      <tr key={v.title} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 pr-4 font-medium truncate max-w-[300px]">{v.title}</td>
+                      <tr key={v.videoId || v.title} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-3 pr-4 font-medium truncate max-w-[300px]">
+                          {v.videoId ? (
+                            <a
+                              href={`https://www.youtube.com/watch?v=${encodeURIComponent(v.videoId)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-primary hover:underline"
+                            >
+                              {v.title}
+                            </a>
+                          ) : v.title}
+                        </td>
                         <td className="py-3">{formatNumber(v.views, 1, "auto")}</td>
                         <td className="py-3 text-emerald-600">{v.ctr}%</td>
-                        <td className="py-3">{v.avgViewDuration}</td>
-                        <td className="py-3 font-medium">{v.retention}%</td>
+                        <td className="py-3">{v.avgViewDuration || "—"}</td>
+                        <td className="py-3 font-medium">{v.retention == null ? "—" : `${v.retention}%`}</td>
                       </tr>
                     ))}
                     {(!ana.ytRecentVideos || ana.ytRecentVideos.length === 0) && (
@@ -220,8 +231,8 @@ export default function InfluencerAnalytics() {
                   <BarChart data={insta.instaEngagementByType || []}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="type" />
-                    <YAxis tickFormatter={(v) => `${v}%`} />
-                    <Tooltip />
+                    <YAxis tickFormatter={formatEngagementRate} />
+                    <Tooltip formatter={(value: number) => formatEngagementRate(value)} />
                     <Bar dataKey="rate" fill="hsl(173, 58%, 39%)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

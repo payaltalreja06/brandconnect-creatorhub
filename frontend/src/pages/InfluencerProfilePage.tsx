@@ -15,12 +15,12 @@ import { influencerApi, requestApi, analyticsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { type Influencer, type YTAnalytics, type InstaAnalytics } from "@/types";
-import { formatNumber } from "@/lib/formatters";
+import { formatEngagementRate, formatNumber } from "@/lib/formatters";
 import { getAvatarUrl } from "@/lib/utils";
 
 
 export default function InfluencerProfilePage() {
-  const { id } = useParams();
+  const { username } = useParams();
   const navigate = useNavigate();
   const { user, isLoggedIn } = useAuth();
   const [inf, setInf] = useState<Influencer | null>(null);
@@ -39,7 +39,7 @@ export default function InfluencerProfilePage() {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const res = await influencerApi.getById(id!);
+        const res = await influencerApi.getById(username!);
         const profile = res.data;
         setInf(profile);
         
@@ -67,8 +67,8 @@ export default function InfluencerProfilePage() {
         setLoading(false);
       }
     };
-    if (id) fetchProfile();
-  }, [id]);
+    if (username) fetchProfile();
+  }, [username]);
 
   const handleSendRequest = async () => {
     if (!campaignName) { toast.error("Campaign name is required"); return; }
@@ -216,7 +216,7 @@ export default function InfluencerProfilePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { icon: Users, label: "Total Followers", value: formatNumber(inf.followers) },
-            { icon: TrendingUp, label: "Engagement Rate", value: (inf.healthScore && inf.healthScore > 50 ? "4.8" : (inf.engagement || "0.0")) + "%" },
+            { icon: TrendingUp, label: "Engagement Rate", value: formatEngagementRate(inf.engagement) },
             { icon: Youtube, label: "YT Subscribers", value: formatNumber(inf.ytSubscribers || 0) },
             { icon: Instagram, label: "IG Followers", value: formatNumber(inf.instaFollowers || 0) },
           ].map((s) => (
@@ -295,16 +295,21 @@ export default function InfluencerProfilePage() {
             <CardContent className="space-y-3">
               {ytData?.recentVideos && ytData.recentVideos.length > 0 ? (
                 ytData.recentVideos.slice(0, 3).map((v) => (
-                  <a 
-                    key={v.videoId || v.title} 
-                    href={v.videoId ? `https://www.youtube.com/watch?v=${v.videoId}` : "#"} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex justify-between items-center text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <span className="truncate flex-1 mr-2 group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">{v.title}</span>
+                  <div key={v.videoId || v.title} className="flex justify-between items-center text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    {v.videoId ? (
+                      <a
+                        href={`https://www.youtube.com/watch?v=${encodeURIComponent(v.videoId)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate flex-1 mr-2 hover:text-primary underline-offset-4 hover:underline"
+                      >
+                        {v.title}
+                      </a>
+                    ) : (
+                      <span className="truncate flex-1 mr-2">{v.title}</span>
+                    )}
                     <span className="text-muted-foreground shrink-0">{formatNumber(v.views)} views</span>
-                  </a>
+                  </div>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">No recent YouTube data available.</p>

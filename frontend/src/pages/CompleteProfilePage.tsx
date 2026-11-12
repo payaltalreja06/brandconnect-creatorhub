@@ -49,8 +49,10 @@ export default function CompleteProfilePage() {
       toast.success("Profile completed successfully!");
       // Redirect to the "Browse" pages for each role
       navigate(user?.role === "influencer" ? "/influencer/brands" : "/brand/discover");
-    } catch {
-      toast.error("Failed to complete profile");
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })
+        .response?.data?.message;
+      toast.error(message || "Failed to complete profile");
     } finally {
       setLoading(false);
     }
@@ -82,10 +84,10 @@ export default function CompleteProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center gap-2">
-                    <Youtube className="w-4 h-4 text-red-500" /> YouTube Channel Link
+                    <Youtube className="w-4 h-4 text-red-500" /> YouTube Channel ID (unique)
                   </label>
                   <Input 
-                    placeholder="youtube.com/c/yourchannel" 
+                    placeholder="UC... or youtube.com/channel/UC..."
                     value={ytChannel} 
                     onChange={e => setYtChannel(e.target.value)} 
                   />

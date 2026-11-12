@@ -1,6 +1,8 @@
 const express = require('express');
 const { auth, requireRole } = require('../middleware/auth');
 const BrandProfile = require('../models/BrandProfile');
+const mongoose = require('mongoose');
+const { profileSlugPattern } = require('../utils/profileSlug');
 
 const router = express.Router();
 
@@ -26,11 +28,16 @@ router.get('/me', auth, requireRole('brand'), async (req, res) => {
 });
 
 // GET /api/brands/:id
-router.get('/:id', async (req, res) => {
+router.get('/:identifier', async (req, res) => {
   try {
-    let profile = await BrandProfile.findById(req.params.id).catch(() => null);
-    if (!profile) {
-      profile = await BrandProfile.findOne({ userId: req.params.id });
+    const { identifier } = req.params;
+    let profile = null;
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      profile = await BrandProfile.findById(identifier);
+      if (!profile) profile = await BrandProfile.findOne({ userId: identifier });
+    } else {
+      const slugPattern = profileSlugPattern(identifier);
+      if (slugPattern) profile = await BrandProfile.findOne({ name: slugPattern });
     }
     if (!profile) return res.status(404).json({ message: 'Brand not found' });
     res.json(profile);

@@ -11,8 +11,8 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { analyticsApi, campaignApi } from "@/lib/api";
-import { formatNumber, formatCurrency } from "@/lib/formatters";
+import { analyticsApi, campaignApi, influencerApi } from "@/lib/api";
+import { formatEngagementRate, formatNumber, formatCurrency } from "@/lib/formatters";
 import { type YTAnalytics, type Campaign } from "@/types";
 
 const COLORS = ["hsl(12, 80%, 62%)", "hsl(222, 62%, 18%)", "hsl(173, 58%, 39%)", "hsl(43, 96%, 56%)", "hsl(262, 52%, 55%)"];
@@ -25,6 +25,7 @@ const fadeUp = {
 export default function InfluencerDashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [engagement, setEngagement] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,6 +38,13 @@ export default function InfluencerDashboard() {
         ]);
         setAnalytics(anaRes.data);
         setCampaigns(camRes.data);
+
+        try {
+          const profileRes = await influencerApi.getMe();
+          setEngagement(profileRes.data.engagement);
+        } catch (error) {
+          console.error("Failed to fetch influencer engagement rate:", error);
+        }
       } catch {
         // No fallback to dummy!
         setAnalytics(null);
@@ -85,7 +93,7 @@ export default function InfluencerDashboard() {
   const kpiCards = [
     { label: "Total Followers", value: formatNumber(data.ytOverview?.subscribers), change: "+12.5%", up: true, icon: Users },
     { label: "Total Views", value: formatNumber(data.ytOverview?.totalViews), change: "+8.3%", up: true, icon: Eye },
-    { label: "Avg Engagement", value: `${data.healthScore > 50 ? "4.8%" : "0.0%"}`, change: "+0.6%", up: true, icon: TrendingUp },
+    { label: "Engagement Rate", value: formatEngagementRate(engagement), change: "+0.6%", up: true, icon: TrendingUp },
     { label: "Total Videos", value: data.ytOverview?.totalVideos || "0", change: "+5", up: true, icon: Video },
     { label: "Campaigns Done", value: campaigns.filter((c: any) => c.status === "completed").length || "0", change: "+0", up: true, icon: Target },
     { label: "Health Score", value: `${data.healthScore || 0}/100`, change: "+0", up: true, icon: Target },
@@ -202,7 +210,7 @@ export default function InfluencerDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis dataKey="type" type="category" tick={{ fontSize: 12 }} width={70} />
-                <Tooltip formatter={(v: number) => [`${v}%`, "Rate"]} />
+                <Tooltip formatter={(v: number) => [formatEngagementRate(v), "Rate"]} />
                 <Bar dataKey="rate" fill="hsl(173,58%,39%)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -229,7 +237,7 @@ export default function InfluencerDashboard() {
                     <tr key={p.platform} className="border-b border-border/50">
                       <td className="py-2.5 font-medium">{p.platform}</td>
                       <td className="py-2.5 text-right">{formatNumber(p.followers)}</td>
-                      <td className="py-2.5 text-right">{p.engagement}%</td>
+                      <td className="py-2.5 text-right">{formatEngagementRate(p.engagement)}</td>
                       <td className="py-2.5 text-right text-emerald-600">+{p.growth}%</td>
                     </tr>
                   ))}
@@ -279,7 +287,7 @@ export default function InfluencerDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(vValue: number) => [`${vValue}%`, "Engagement"]} />
+                <Tooltip formatter={(vValue: number) => [formatEngagementRate(vValue), "Engagement"]} />
                 <Bar dataKey="engagement" fill="hsl(43,96%,56%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -288,7 +296,7 @@ export default function InfluencerDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(vValue: number) => [`${vValue}%`, "Engagement"]} />
+                <Tooltip formatter={(vValue: number) => [formatEngagementRate(vValue), "Engagement"]} />
                 <Bar dataKey="engagement" fill="hsl(262,52%,55%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

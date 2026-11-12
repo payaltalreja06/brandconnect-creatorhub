@@ -15,6 +15,9 @@ export default function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { isLoggedIn, userName, role } = useAuth();
+  const visibleNavLinks = location.pathname === "/"
+    ? navLinks.filter((link) => link.path !== "/influencers")
+    : navLinks;
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -34,7 +37,7 @@ export default function PublicNavbar() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => {
+          {visibleNavLinks.map((link) => {
             const isHashLink = link.path.startsWith("/#");
             return (
               <Link
@@ -109,7 +112,7 @@ export default function PublicNavbar() {
             className="md:hidden border-t border-gray-100 overflow-hidden bg-white"
           >
             <div className="flex flex-col p-4 gap-2">
-              {navLinks.map((link) => (
+              {visibleNavLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}

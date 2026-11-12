@@ -160,6 +160,7 @@ def run_real_data_etl():
                 v_eng_rate = calculate_engagement_rate(v_views, v_likes, v_comm)
                 
                 yt_recent_videos.append({
+                    "videoId": v.get("videoId"),
                     "title": v.get("title"),
                     "views": v_views,
                     "likes": v_likes,

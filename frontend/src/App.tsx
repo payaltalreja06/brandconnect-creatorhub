@@ -68,7 +68,7 @@ const App = () => (
                 <Route path="/influencer/analytics" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerAnalytics /></InfluencerLayout></ProtectedRoute>} />
                 <Route path="/influencer/campaigns" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerCampaigns /></InfluencerLayout></ProtectedRoute>} />
                 <Route path="/influencer/brands" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerBrands /></InfluencerLayout></ProtectedRoute>} />
-                <Route path="/influencer/brand/:id" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><BrandProfilePage /></InfluencerLayout></ProtectedRoute>} />
+                <Route path="/influencer/brand/:username" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><BrandProfilePage /></InfluencerLayout></ProtectedRoute>} />
                 <Route path="/influencer/messages" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerMessages /></InfluencerLayout></ProtectedRoute>} />
                 <Route path="/influencer/revenue" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerRevenue /></InfluencerLayout></ProtectedRoute>} />
                 <Route path="/influencer/schedule" element={<ProtectedRoute requiredRole="influencer"><InfluencerLayout><InfluencerSchedule /></InfluencerLayout></ProtectedRoute>} />
@@ -77,7 +77,7 @@ const App = () => (
                 {/* Brand routes */}
                 <Route path="/brand/dashboard" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandDashboard /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/discover" element={<ProtectedRoute><BrandLayout><BrandDiscover /></BrandLayout></ProtectedRoute>} />
-                <Route path="/brand/influencer/:id" element={<ProtectedRoute><BrandLayout><InfluencerProfilePage /></BrandLayout></ProtectedRoute>} />
+                <Route path="/brand/influencer/:username" element={<ProtectedRoute><BrandLayout><InfluencerProfilePage /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/campaigns" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandCampaigns /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/messages" element={<ProtectedRoute><BrandLayout><BrandMessages /></BrandLayout></ProtectedRoute>} />
                 <Route path="/brand/analytics" element={<ProtectedRoute requiredRole="brand"><BrandLayout><BrandAnalytics /></BrandLayout></ProtectedRoute>} />

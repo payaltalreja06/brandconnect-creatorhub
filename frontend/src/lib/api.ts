@@ -45,7 +45,7 @@ export const authApi = {
 export const influencerApi = {
   getAll: (params?: Record<string, string>) => api.get('/influencers', { params }),
   getMe: () => api.get('/influencers/me'),
-  getById: (id: string) => api.get(`/influencers/${id}`),
+  getById: (identifier: string) => api.get(`/influencers/${encodeURIComponent(identifier)}`),
   updateMe: (data: Record<string, unknown>) => api.put('/influencers/me', data),
   updateFaqs: (faqs: { question: string; answer: string }[]) =>
     api.put('/influencers/me/faqs', { faqs }),
@@ -60,7 +60,7 @@ export const influencerApi = {
 export const brandApi = {
   getAll: () => api.get('/brands'),
   getMe: () => api.get('/brands/me'),
-  getById: (id: string) => api.get(`/brands/${id}`),
+  getById: (identifier: string) => api.get(`/brands/${encodeURIComponent(identifier)}`),
   updateMe: (data: Record<string, unknown>) => api.put('/brands/me', data),
 };
 

@@ -1,6 +1,9 @@
 const express = require('express');
 const { auth, requireRole } = require('../middleware/auth');
 const InfluencerProfile = require('../models/InfluencerProfile');
+const { normalizeYoutubeChannelId } = require('../utils/youtube');
+const { profileSlugPattern } = require('../utils/profileSlug');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -42,11 +45,20 @@ router.get('/me', auth, requireRole('influencer'), async (req, res) => {
 });
 
 // GET /api/influencers/:id — get by profile _id or userId
-router.get('/:id', async (req, res) => {
+router.get('/:identifier', async (req, res) => {
   try {
-    let profile = await InfluencerProfile.findById(req.params.id).catch(() => null);
-    if (!profile) {
-      profile = await InfluencerProfile.findOne({ userId: req.params.id });
+    const { identifier } = req.params;
+    let profile = null;
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      profile = await InfluencerProfile.findById(identifier);
+      if (!profile) profile = await InfluencerProfile.findOne({ userId: identifier });
+    } else {
+      const slugPattern = profileSlugPattern(identifier);
+      if (slugPattern) {
+        profile = await InfluencerProfile.findOne({
+          $or: [{ handle: slugPattern }, { name: slugPattern }],
+        });
+      }
     }
     if (!profile) return res.status(404).json({ message: 'Influencer not found' });
     res.json(profile);
@@ -61,18 +73,53 @@ router.put('/me', auth, requireRole('influencer'), async (req, res) => {
     const allowed = [
       'name', 'handle', 'bio', 'location', 'domain', 'platforms',
       'rate', 'price', 'contentType', 'gender', 'age', 'language',
-      'avatar', 'coverImage', 'website', 'instagram', 'youtube', 'tiktok',
+      'avatar', 'coverImage', 'website', 'instagram', 'tiktok',
       'faqs',
     ];
     const updates = {};
     allowed.forEach((key) => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     });
+
+    const unset = {};
+    if (req.body.youtube !== undefined) {
+      let channelId;
+      try {
+        channelId = normalizeYoutubeChannelId(req.body.youtube);
+      } catch (err) {
+        return res.status(400).json({ message: err.message });
+      }
+
+      if (channelId) {
+        const existingChannel = await InfluencerProfile.findOne({
+          userId: { $ne: req.user._id },
+          $or: [
+            { youtubeChannelId: channelId },
+            { youtube: channelId },
+            { youtube: `https://www.youtube.com/channel/${channelId}` },
+            { youtube: `https://youtube.com/channel/${channelId}` },
+            { youtube: `youtube.com/channel/${channelId}` },
+          ],
+        });
+        if (existingChannel) {
+          return res.status(409).json({ message: 'This YouTube channel is already linked to another account.' });
+        }
+        updates.youtube = channelId;
+        updates.youtubeChannelId = channelId;
+      } else {
+        updates.youtube = '';
+        unset.youtubeChannelId = 1;
+      }
+    }
+
     updates.updatedAt = new Date();
 
     const profile = await InfluencerProfile.findOneAndUpdate(
       { userId: req.user._id },
-      { $set: updates },
+      {
+        $set: updates,
+        ...(Object.keys(unset).length ? { $unset: unset } : {}),
+      },
       { new: true, upsert: true }
     );
 
@@ -85,6 +132,9 @@ router.put('/me', auth, requireRole('influencer'), async (req, res) => {
     res.json(profile);
   } catch (err) {
     console.error('Update influencer profile error:', err);
+    if (err.code === 11000 && err.keyPattern?.youtubeChannelId) {
+      return res.status(409).json({ message: 'This YouTube channel is already linked to another account.' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });

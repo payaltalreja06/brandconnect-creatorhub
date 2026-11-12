@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { influencerApi } from "@/lib/api";
 import { type Influencer } from "@/types";
-import { formatNumber } from "@/lib/formatters";
+import { formatEngagementRate, formatNumber } from "@/lib/formatters";
 import { domains } from "@/constants";
 import { getAvatarUrl } from "@/lib/utils";
+import { profileSlug } from "@/lib/profileSlug";
 
 export default function BrandDiscover() {
   const [search, setSearch] = useState("");
@@ -92,7 +93,7 @@ export default function BrandDiscover() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {influencers.map((inf, i) => (
             <motion.div key={getProfileId(inf) || i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/brand/influencer/${getProfileId(inf)}`)}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/brand/influencer/${profileSlug(inf.handle || inf.name, getProfileId(inf))}`)}>
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3 mb-3">
                     <img src={getAvatarUrl(inf.avatar)} alt={inf.name} className="w-12 h-12 rounded-xl bg-muted object-cover" />
@@ -103,13 +104,6 @@ export default function BrandDiscover() {
                       </div>
                       <p className="text-sm text-muted-foreground">{inf.handle}</p>
                     </div>
-                    {inf.healthScore && (
-                      <div className="text-center shrink-0">
-                        <div className="w-10 h-10 rounded-full border-2 border-accent flex items-center justify-center">
-                          <span className="text-xs font-bold">{inf.healthScore}</span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <div className="flex gap-2 mb-3 flex-wrap">
                     {inf.domain?.map(d => <Badge key={d} variant="secondary" className="text-xs">{d}</Badge>)}
@@ -120,7 +114,7 @@ export default function BrandDiscover() {
                       <p className="text-xs text-muted-foreground">Followers</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold">{inf.healthScore > 50 ? "4.8%" : "0.0%"}</p>
+                      <p className="text-sm font-bold">{formatEngagementRate(inf.engagement)}</p>
                       <p className="text-xs text-muted-foreground">Engagement</p>
                     </div>
                     <div>

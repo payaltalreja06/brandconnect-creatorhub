@@ -3,6 +3,7 @@ import { Heart, Star, MapPin, Instagram, Youtube } from "lucide-react";
 import { type Influencer } from "@/types";
 import { formatNumber } from "@/lib/formatters";
 import { getAvatarUrl } from "@/lib/utils";
+import { profileSlug } from "@/lib/profileSlug";
 
 // TikTok icon as simple SVG since lucide doesn't have it
 function TikTokIcon({ className }: { className?: string }) {
@@ -40,7 +41,7 @@ export default function InfluencerMarketplaceCard({
   influencer: Influencer;
 }) {
   return (
-    <Link to={`/brand/influencer/${influencer.id}`} className="group block">
+    <Link to={`/brand/influencer/${profileSlug(influencer.handle || influencer.name, influencer._id || influencer.id)}`} className="group block">
       <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
         {/* Cover Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">

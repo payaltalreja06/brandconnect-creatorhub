@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { influencerApi } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { formatEngagementRate } from "@/lib/formatters";
 
 export default function BrandAnalytics() {
   const [loading, setLoading] = useState(true);
@@ -71,7 +72,7 @@ export default function BrandAnalytics() {
                 {brandAnalytics.campaignPerformance.map((c) => (
                   <tr key={c.campaign} className="border-b border-border/50">
                     <td className="py-2.5 font-medium">{c.campaign}</td>
-                    <td className="py-2.5 text-right">{c.engagement}%</td>
+                    <td className="py-2.5 text-right">{formatEngagementRate(c.engagement)}</td>
                     <td className="py-2.5 text-right">{c.roi}x</td>
                     <td className="py-2.5 text-right">{(c.reach/1000000).toFixed(1)}M</td>
                   </tr>
@@ -89,7 +90,9 @@ export default function BrandAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,90%)" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(215,16%,47%)" />
                 <YAxis tick={{ fontSize: 12 }} stroke="hsl(215,16%,47%)" />
-                <Tooltip />
+                <Tooltip formatter={(value: number, name: string) => (
+                  name === "Engagement %" ? formatEngagementRate(value) : value
+                )} />
                 <Bar dataKey="engagement" fill="hsl(12,80%,62%)" name="Engagement %" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="roi" fill="hsl(173,58%,39%)" name="ROI" radius={[4, 4, 0, 0]} />
               </BarChart>

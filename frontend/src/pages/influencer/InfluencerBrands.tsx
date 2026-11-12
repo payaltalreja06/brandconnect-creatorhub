@@ -9,6 +9,7 @@ import { brandApi, requestApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { profileSlug } from "@/lib/profileSlug";
 
 export default function InfluencerBrands() {
   const [brands, setBrands] = useState<any[]>([]);
@@ -101,7 +102,7 @@ export default function InfluencerBrands() {
                   <div className="flex items-center gap-2 truncate">💰 Budget: {b.budget || "Contact for info"}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Link to={`/influencer/brand/${b.userId}`} className="flex-1">
+                  <Link to={`/influencer/brand/${profileSlug(b.name, b._id || b.userId)}`} className="flex-1">
                     <Button variant="outline" className="w-full" size="sm">
                       View Profile
                     </Button>

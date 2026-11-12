@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { influencerApi } from "@/lib/api";
 import { type Influencer } from "@/types";
-import { formatNumber } from "@/lib/formatters";
+import { formatEngagementRate, formatNumber } from "@/lib/formatters";
 
 function InfluencerCard({ inf }: { inf: Influencer }) {
   const id = inf._id || inf.id;
@@ -45,7 +45,7 @@ function InfluencerCard({ inf }: { inf: Influencer }) {
               <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
-              <p className="font-semibold text-sm">{inf.engagement || 0}%</p>
+              <p className="font-semibold text-sm">{formatEngagementRate(inf.engagement)}</p>
               <p className="text-xs text-muted-foreground">Engagement</p>
             </div>
             <div className="text-center">
@@ -202,4 +202,3 @@ export default function DiscoverPage() {
     </div>
   );
 }
-

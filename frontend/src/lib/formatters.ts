@@ -30,6 +30,11 @@ export function formatNumber(
   return num.toString();
 }
 
+export function formatEngagementRate(rate: number | null | undefined): string {
+  const value = typeof rate === "number" && Number.isFinite(rate) ? rate : 0;
+  return `${value.toFixed(1)}%`;
+}
+
 /**
  * Formats currency in INR.
  */

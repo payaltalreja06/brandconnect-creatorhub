@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { analyticsApi, campaignApi } from "@/lib/api";
-import { formatNumber, formatCurrency } from "@/lib/formatters";
+import { formatEngagementRate, formatNumber, formatCurrency } from "@/lib/formatters";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -134,7 +134,7 @@ export default function BrandDashboard() {
                   {performance?.map((c: any) => (
                     <tr key={c.campaign} className="border-b border-border/50">
                       <td className="py-2.5 font-medium">{c.campaign}</td>
-                      <td className="py-2.5 text-right">{c.engagement}%</td>
+                      <td className="py-2.5 text-right">{formatEngagementRate(c.engagement)}</td>
                       <td className="py-2.5 text-right">{c.roi}x</td>
                       <td className="py-2.5 text-right">{formatNumber(c.reach)}</td>
                     </tr>
@@ -188,7 +188,7 @@ export default function BrandDashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium">{inf.roi}x ROI</p>
-                    <p className="text-xs text-muted-foreground">{inf.engagement}% eng.</p>
+                    <p className="text-xs text-muted-foreground">{formatEngagementRate(inf.engagement)} eng.</p>
                   </div>
                 </div>
               ))}

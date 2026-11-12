@@ -110,7 +110,7 @@ export interface YTAnalytics {
   overview: {
     totalViews: number;
     subscribers: number;
-    avgWatchTime: string;
+    avgWatchTime: string | null;
     totalVideos: number;
   };
   recentVideos: {
@@ -120,8 +120,8 @@ export interface YTAnalytics {
     likes: number;
     comments: number;
     ctr: number;
-    avgViewDuration: string;
-    retention: number;
+    avgViewDuration: string | null;
+    retention: number | null;
     date: string;
   }[];
   monthlyViews: { month: string; views: number }[];

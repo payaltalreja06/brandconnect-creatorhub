@@ -8,15 +8,15 @@ import { brandApi } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function BrandProfilePage() {
-  const { id } = useParams();
+  const { username } = useParams();
   const [brand, setBrand] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBrand = async () => {
       try {
-        if (!id) return;
-        const res = await brandApi.getById(id);
+        if (!username) return;
+        const res = await brandApi.getById(username);
         setBrand(res.data);
       } catch (err) {
         console.error("Failed to load brand:", err);
@@ -26,7 +26,7 @@ export default function BrandProfilePage() {
       }
     };
     fetchBrand();
-  }, [id]);
+  }, [username]);
 
   if (loading) {
     return (
